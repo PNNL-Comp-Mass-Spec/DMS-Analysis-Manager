@@ -34,8 +34,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Retrieve the parameter file
-            var paramFileName = mJobParams.GetParam("ParamFileName");
-            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+            var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+            var paramFileStoragePath = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
 
             if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {

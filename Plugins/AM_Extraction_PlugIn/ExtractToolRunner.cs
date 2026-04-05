@@ -520,7 +520,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                var paramFileName = mJobParams.GetParam("ParamFileName");
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
 
                 var resultsFilePath = Path.Combine(mWorkDir, mDatasetName + fileNameSuffix);
@@ -2127,7 +2127,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Validate that the mass errors are within tolerance
-                var paramFileName = mJobParams.GetParam("ParamFileName");
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
                 if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSGFPlus, paramFileName))
                 {
@@ -2439,7 +2439,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Validate that the mass errors are within tolerance
                 var parameterFileName = resultType == PeptideHitResultTypes.XTandem
                     ? "input.xml"
-                    : mJobParams.GetParam("ParamFileName");
+                    : mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
                 var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileNameFromPHRP);
 
@@ -3438,7 +3438,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
                 {
                     // Ignore this error for inspect if running an unrestricted search
-                    var paramFileName = mJobParams.GetJobParameter("ParamFileName", "");
+                    var paramFileName = mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_PARAMETER_FILE, "");
 
                     // ReSharper disable once StringLiteralTypo
                     if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)

@@ -68,7 +68,7 @@ namespace AnalysisManagerProMexPlugIn
 
             if (proMexScript)
             {
-                paramFileName = mJobParams.GetJobParameter("ParamFileName", "");
+                paramFileName = mJobParams.GetJobParameter(JOB_PARAM_PARAMETER_FILE, "");
 
                 if (string.IsNullOrEmpty(paramFileName))
                 {

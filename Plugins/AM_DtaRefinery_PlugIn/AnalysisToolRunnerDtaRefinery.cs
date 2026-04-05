@@ -71,8 +71,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
             mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = false,
-                EchoOutputToConsole = false,
                 CacheStandardOutput = false,
+                EchoOutputToConsole = false,
                 WriteConsoleOutputToFile = false
             };
 
@@ -93,25 +93,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Verify that Python.exe exists
-            // Python3ProgLoc will be something like this: "C:\Python3"
-            var pythonProgLoc = mMgrParams.GetParam("Python3ProgLoc");
+            var pythonExePath = GetPythonProgLoc(mMgrParams, out var errorMessage);
 
-            if (!Directory.Exists(pythonProgLoc))
+            if (string.IsNullOrWhiteSpace(pythonExePath))
             {
-                if (pythonProgLoc.Length == 0)
-                    LogError("Parameter 'Python3ProgLoc' not defined for this manager");
-                else
-                    LogError("Cannot find python in directory: " + pythonProgLoc);
-
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            var pythonExe = new FileInfo(Path.Combine(pythonProgLoc, "python.exe"));
-
-            if (!pythonExe.Exists)
-            {
-                LogError("Python executable not found at: " + pythonExe.FullName);
+                LogError(errorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -128,7 +114,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             const string consoleOutputFileName = "DTARefinery_Console_Output.txt";
             mJobParams.AddResultFileToSkip(Path.GetFileName(batchFilePath));
 
-            var batchFileCmdLine = pythonExe + " " + progLoc + " " + arguments + " > " + consoleOutputFileName + " 2>&1";
+            var batchFileCmdLine = pythonExePath + " " + progLoc + " " + arguments + " > " + consoleOutputFileName + " 2>&1";
 
             LogDebug("Creating batch file at " + batchFilePath);
 

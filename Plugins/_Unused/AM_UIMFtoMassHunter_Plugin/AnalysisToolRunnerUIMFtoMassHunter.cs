@@ -94,7 +94,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 }
 
                 // No need to keep several files; exclude them now
-                mJobParams.AddResultFileToSkip(mJobParams.GetParam("ParamFileName"));
+                mJobParams.AddResultFileToSkip(mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
                 var success = CopyResultsToTransferDirectory();
 

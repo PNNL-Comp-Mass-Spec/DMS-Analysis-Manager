@@ -65,7 +65,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Retrieve the MultiAlign Parameter .xml file specified for this job
-            var multialignParamFileName = mJobParams.GetParam("ParamFileName");
+            var multialignParamFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
 
             if (string.IsNullOrEmpty(multialignParamFileName))
             {

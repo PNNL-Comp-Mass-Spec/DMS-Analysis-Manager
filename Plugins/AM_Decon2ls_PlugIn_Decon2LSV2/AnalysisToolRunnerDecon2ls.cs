@@ -663,7 +663,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (string.IsNullOrWhiteSpace(paramFileNameOverride))
             {
-                paramFileName = mJobParams.GetParam("ParamFileName");
+                paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
             }
             else
             {

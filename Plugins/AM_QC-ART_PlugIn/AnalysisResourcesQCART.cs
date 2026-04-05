@@ -117,7 +117,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
-                var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+                var paramFileStoragePath = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
 
                 var success = FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath);
 
@@ -690,7 +690,7 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Retrieve the MASIC _ReporterIons.txt file for the baseline datasets
         /// </summary>
-        /// <param name="paramFileName">Parameter file name</param>
+        /// <param name=JOB_PARAM_PARAMETER_FILE>Parameter file name</param>
         /// <param name="baselineDatasets">List of baseline datasets (dataset name and dataset ID)</param>
         /// <returns>True if success; otherwise false</returns>
         private bool RetrieveDataForBaselineDatasets(string paramFileName, Dictionary<string, int> baselineDatasets)

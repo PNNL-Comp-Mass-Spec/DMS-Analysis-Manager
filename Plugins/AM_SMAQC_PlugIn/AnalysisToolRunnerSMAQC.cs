@@ -75,7 +75,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the name of the .XML file listing the Measurements to run
-                var parameterFileName = mJobParams.GetParam("ParamFileName");
+                var parameterFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var parameterFilePath = Path.Combine(mWorkDir, parameterFileName);
 
                 // Lookup the InstrumentID for this dataset

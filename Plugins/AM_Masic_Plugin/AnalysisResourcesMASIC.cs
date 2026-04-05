@@ -98,7 +98,7 @@ namespace AnalysisManagerMasicPlugin
             mJobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
 
             // Retrieve param file
-            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParamFileName"), mJobParams.GetParam("ParamFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE), mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH)))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

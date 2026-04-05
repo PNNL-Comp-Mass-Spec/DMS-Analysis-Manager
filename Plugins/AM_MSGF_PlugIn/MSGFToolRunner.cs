@@ -1413,7 +1413,7 @@ namespace AnalysisManagerMSGFPlugin
             bool mgfInstrumentData)
         {
             // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
-            var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
+            var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
             var success = CheckETDModeEnabled(resultType, searchToolParamFilePath);
 

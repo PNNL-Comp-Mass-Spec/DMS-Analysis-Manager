@@ -165,7 +165,7 @@ namespace AnalysisManagerMODaPlugIn
             mConsoleOutputErrorMsg = string.Empty;
 
             // Customize the parameter file
-            var paramFileName = mJobParams.GetParam("ParamFileName");
+            var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
             var spectrumFileName = mDatasetName + ".mgf";
 

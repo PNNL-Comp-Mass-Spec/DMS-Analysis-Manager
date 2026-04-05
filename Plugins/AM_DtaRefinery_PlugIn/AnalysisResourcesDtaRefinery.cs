@@ -52,7 +52,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             LogMessage("Retrieving the DtaRefinery param file");
 
             // Retrieve param file
-            var paramFileName = mJobParams.GetParam("ParamFileName");
+            var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
 
             if (!RetrieveGeneratedParamFile(paramFileName))
             {

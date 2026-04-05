@@ -883,7 +883,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var dbFilename = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName");
                 var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
-                var paramFileName = mJobParams.GetParam("ParamFileName");
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
                 currentTask = "Create a parameter file for each thread";
 

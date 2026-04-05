@@ -103,7 +103,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the values to pass to LipidTools.exe at the command line
-                var parameterFileName = mJobParams.GetParam("ParamFileName");
+                var parameterFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 var parameterFilePath = Path.Combine(mWorkDir, parameterFileName);
 
                 LogMessage("Running LipidTools");
@@ -482,7 +482,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             try
             {
-                var paramFileFolderPath = mJobParams.GetJobParameter("ParamFileStoragePath", string.Empty);
+                var paramFileFolderPath = mJobParams.GetJobParameter(JOB_PARAM_PARAM_FILE_STORAGE_PATH, string.Empty);
 
                 if (string.IsNullOrEmpty(paramFileFolderPath))
                 {

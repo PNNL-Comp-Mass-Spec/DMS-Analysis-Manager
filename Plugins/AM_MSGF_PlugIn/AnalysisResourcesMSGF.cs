@@ -175,7 +175,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
                 // Get the SEQUEST, X!Tandem, Inspect, MS-GF+, MODa, MODPlus, or MSPathFinder parameter file
-                var paramFile = mJobParams.GetParam("ParamFileName");
+                var paramFile = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
 
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(paramFile, false))
                 {
@@ -323,7 +323,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
 
-                    var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParamFileName")) + PHRP_MOD_DEFS_SUFFIX;
+                    var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE)) + PHRP_MOD_DEFS_SUFFIX;
 
                     if (FileSearchTool.FindAndRetrieveMiscFiles(modDefsFile, false))
                     {

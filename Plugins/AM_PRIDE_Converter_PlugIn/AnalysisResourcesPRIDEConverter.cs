@@ -397,7 +397,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+                    var paramFileStoragePath = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
                     templateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
 
                     LogWarning(
@@ -489,7 +489,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!matchFound)
                 {
-                    var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+                    var paramFileStoragePath = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
 
                     if (string.IsNullOrEmpty(paramFileStoragePath))
                     {

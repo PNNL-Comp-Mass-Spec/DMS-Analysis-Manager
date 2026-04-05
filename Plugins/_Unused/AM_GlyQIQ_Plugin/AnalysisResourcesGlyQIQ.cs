@@ -301,9 +301,9 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Define the base source folder path
                 // Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ
-                var paramFileStoragePathBase = mJobParams.GetParam("ParamFileStoragePath");
+                var paramFileStoragePathBase = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
 
-                mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter("ParamFileName", "");
+                mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter(JOB_PARAM_PARAMETER_FILE, "");
 
                 if (string.IsNullOrEmpty(mGlyQIQParams.IQParamFileName))
                 {

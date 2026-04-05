@@ -55,7 +55,7 @@ namespace AnalysisManagerOMSSAPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParamFileName"), mJobParams.GetParam("ParamFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE), mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH)))
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             // Convert the .fasta file to OMSSA format using formatdb.exe
@@ -70,7 +70,7 @@ namespace AnalysisManagerOMSSAPlugIn
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
             // Stored in same location as parameter file
             //         mJobParams.GetParam("SettingsFileName"), _
-            if (!FileSearchTool.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, mJobParams.GetParam("ParamFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH)))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -212,7 +212,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             var omssaDefaultInput = Path.Combine(mWorkDir, OMSSA_DEFAULT_INPUT_FILE);
             var omssaInput = Path.Combine(mWorkDir, OMSSA_INPUT_FILE);
-            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
+            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
             var searchSettings = Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName"));
             var msInFileName = Path.Combine(mWorkDir, DatasetName + ".xml");

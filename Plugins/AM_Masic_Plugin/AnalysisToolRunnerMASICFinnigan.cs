@@ -28,11 +28,11 @@ namespace AnalysisManagerMasicPlugin
         {
             string parameterFilePath;
 
-            var parameterFileName = mJobParams.GetParam("ParamFileName");
+            var parameterFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
             if (parameterFileName != null && !string.Equals(parameterFileName.Trim(), "na", StringComparison.OrdinalIgnoreCase))
             {
-                parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
+                parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
             }
             else
             {

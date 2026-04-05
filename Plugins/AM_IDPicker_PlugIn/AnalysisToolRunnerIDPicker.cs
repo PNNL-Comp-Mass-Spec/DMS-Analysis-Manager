@@ -523,7 +523,7 @@ namespace AnalysisManagerIDPickerPlugIn
             try
             {
                 // Set up and execute a program runner to run PeptideListToXML
-                var paramFileName = mJobParams.GetParam("ParamFileName");
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
                 mPepXMLFilePath = Path.Combine(mWorkDir, phrpBaseName + ".pepXML");
                 var hitsPerSpectrum = mJobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);

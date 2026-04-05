@@ -858,7 +858,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
                 msAlignFile[0].MoveTo(Path.Combine(msInputFolderPath, mInputPropertyValues.SpectrumFileName));
 
-                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 if (!CreateInputPropertiesFile(paramFilePath, msInputFolderPath, msAlignVersion))
                 {

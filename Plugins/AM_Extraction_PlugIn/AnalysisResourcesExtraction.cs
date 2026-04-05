@@ -1598,7 +1598,7 @@ namespace AnalysisManagerExtractionPlugin
 
             mJobParams.AddResultFileToSkip(fileToGet);
 
-            if (!CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir))
+            if (!CopyFileToWorkDir("default_input.xml", mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH), mWorkDir))
             {
                 LogError("Failed retrieving default_input.xml file");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -1660,7 +1660,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>CloseOutType specifying results</returns>
         private CloseOutType RetrieveMiscFiles(string resultTypeName)
         {
-            var paramFileName = mJobParams.GetParam("ParamFileName");
+            var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
             var modDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
 
             try

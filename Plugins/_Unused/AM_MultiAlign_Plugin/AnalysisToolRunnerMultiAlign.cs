@@ -67,7 +67,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Set up and execute a program runner to run MultiAlign
             var arguments = " input.txt" +
-                            " " + Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName")) +
+                            " " + Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE)) +
                             " " + mWorkDir +
                             " " + multiAlignDatabaseName;
 

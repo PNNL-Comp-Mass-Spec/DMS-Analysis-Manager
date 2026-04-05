@@ -431,7 +431,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     targetWorkingParametersDirectory.Create();
                 }
 
-                var iqParamFileName = mJobParams.GetJobParameter("ParamFileName", "");
+                var iqParamFileName = mJobParams.GetJobParameter(JOB_PARAM_PARAMETER_FILE, "");
 
                 foreach (var file in sourceWorkingParametersDirectory.GetFiles())
                 {

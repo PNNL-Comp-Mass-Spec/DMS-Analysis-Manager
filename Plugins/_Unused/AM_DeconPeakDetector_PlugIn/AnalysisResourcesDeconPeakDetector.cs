@@ -37,7 +37,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             // Retrieve the peak detector parameter file
 
             var peakDetectorParamFileName = mJobParams.GetJobParameter("PeakDetectorParamFile", "");
-            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+            var paramFileStoragePath = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
 
             paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection");
 

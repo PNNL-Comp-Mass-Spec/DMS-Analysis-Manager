@@ -430,6 +430,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string JOB_PARAM_PARAMETER_FILE = "ParamFileName";
 
         /// <summary>
+        /// Parameter file storage path
+        /// </summary>
+        public const string JOB_PARAM_PARAM_FILE_STORAGE_PATH = "ParamFileStoragePath";
+
+        /// <summary>
         /// Step tool parameter file from the previous job step
         /// </summary>
         public const string JOB_PARAM_PREVIOUS_JOB_STEP_TOOL_PARAMETER_FILE = "PreviousJobStepToolParameterFile";

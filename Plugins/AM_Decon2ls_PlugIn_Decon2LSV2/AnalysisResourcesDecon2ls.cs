@@ -113,7 +113,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (string.IsNullOrWhiteSpace(paramFileNameOverride))
             {
-                paramFileName = mJobParams.GetParam("ParamFileName");
+                paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
             }
             else
             {
@@ -125,7 +125,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // When the analysis manager retrieves the parameters for the current job step, the database customizes
             // the value of ParamFileStoragePath to be the storage path for the current step tool
-            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+            var paramFileStoragePath = mJobParams.GetParam(JOB_PARAM_PARAM_FILE_STORAGE_PATH);
 
             if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {

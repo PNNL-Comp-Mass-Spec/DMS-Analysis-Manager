@@ -568,7 +568,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         {
             tdaEnabled = false;
 
-            parameterFileName = mJobParams.GetParam("ParamFileName");
+            parameterFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message

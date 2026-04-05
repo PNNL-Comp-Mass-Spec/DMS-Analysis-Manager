@@ -162,7 +162,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Read the MSAlign Parameter File
-                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
                 var cmdLineGenerated = CreateMSAlignCommandLine(paramFilePath, out var msalignCmdLineOptions);
 

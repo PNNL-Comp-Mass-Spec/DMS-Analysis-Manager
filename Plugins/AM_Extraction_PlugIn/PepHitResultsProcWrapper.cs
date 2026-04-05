@@ -76,7 +76,7 @@ namespace AnalysisManagerExtractionPlugin
             PeptideHitResultTypes resultType,
             string outputFileBaseName = "")
         {
-            var paramFileName = mJobParams.GetParam("ParamFileName");
+            var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
             try
             {
