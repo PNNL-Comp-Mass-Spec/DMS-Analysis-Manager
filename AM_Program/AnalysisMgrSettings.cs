@@ -19,10 +19,10 @@ using PRISMDatabaseUtils.AppSettings;
 namespace AnalysisManagerProg
 {
     /// <summary>
-    /// Class for loading, storing and accessing manager parameters.
+    /// Class for loading, storing and accessing manager parameters
     /// </summary>
     /// <remarks>
-    /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive.
+    /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive
     /// If manager active, retrieves remainder of settings manager parameters database.
     /// </remarks>
     public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams

@@ -9,8 +9,6 @@
 // It reports PSM count, unique peptide count, and unique protein count, while also tracking phosphopeptides, Keratin peptides, etc.
 //*********************************************************************************************************
 
-using PHRPReader;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -18,8 +16,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using PHRPReader;
 using PHRPReader.Data;
 using PHRPReader.Reader;
+using PRISM;
 using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global

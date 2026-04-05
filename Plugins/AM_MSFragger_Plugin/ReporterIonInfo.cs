@@ -1,10 +1,10 @@
-﻿using AnalysisManagerBase;
-using PRISMDatabaseUtils;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
+using AnalysisManagerBase;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMSFraggerPlugIn;
 

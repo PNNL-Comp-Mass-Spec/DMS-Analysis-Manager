@@ -2,10 +2,10 @@
 using System.Data;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;
-using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.FileAndDirectoryTools;
-using PRISM.Logging;
+using AnalysisManagerBase.JobConfig;
 using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase.DataFileTools

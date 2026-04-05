@@ -3043,7 +3043,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                     // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
-                    // Both the MSXml step tool and DeconTools require the .Baf file
+                    // The MSXml step tool, NOM Annotation, and DeconTools step tools require the .Baf file
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
                     // In contrast, ICR-2LS only needs the ser or FID file, plus the apexAcquisition.method file in the .md folder
 

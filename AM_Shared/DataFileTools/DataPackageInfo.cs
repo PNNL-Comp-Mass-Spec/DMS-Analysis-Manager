@@ -48,7 +48,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <remarks>
         /// Tracks whether each item in PackedParam_DatasetFilePaths is a File or a Directory
         /// Keys are dataset IDs
-        /// Values are the word File or Directory
+        /// Values are either "File" or "Directory", indicating the file system type of the dataset file/directory
         /// </remarks>
         private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES = "PackedParam_DatasetFileTypes";
 
@@ -149,7 +149,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         /// <summary>
         /// Keys are dataset IDs
-        /// Values are either File or Directory, indicating the file system type of the dataset file/directory
+        /// Values are either "File" or "Directory", indicating the file system type of the dataset file/directory
         /// </summary>
         public Dictionary<int, string> DatasetFileTypes { get; }
 
