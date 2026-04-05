@@ -220,7 +220,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -302,8 +302,7 @@ namespace AnalysisManagerFormularityPlugin
                     return false;
                 }
 
-                var calibrationFilesDirPath = Path.Combine(paramFileStoragePath, "CalibrationFiles");
-                var calibrationFilesDirectory = new DirectoryInfo(calibrationFilesDirPath);
+                var calibrationFilesDirectory = new DirectoryInfo(Path.Combine(paramFileStoragePath, "CalibrationFiles"));
 
                 if (!calibrationFilesDirectory.Exists)
                 {
@@ -311,8 +310,7 @@ namespace AnalysisManagerFormularityPlugin
                     return false;
                 }
 
-                var calibrationPeaksFilePath = Path.Combine(calibrationFilesDirectory.FullName, calibrationPeaksFileName);
-                var calibrationPeaksFile = new FileInfo(calibrationPeaksFilePath);
+                var calibrationPeaksFile = new FileInfo(Path.Combine(calibrationFilesDirectory.FullName, calibrationPeaksFileName));
 
                 if (!calibrationPeaksFile.Exists)
                 {
@@ -327,7 +325,7 @@ namespace AnalysisManagerFormularityPlugin
                 mJobParams.AddAdditionalParameter(
                     AnalysisJob.STEP_PARAMETERS_SECTION,
                     JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
-                    calibrationPeaksFileName);
+                    calibrationPeaksFile.Name);
 
                 return true;
             }
