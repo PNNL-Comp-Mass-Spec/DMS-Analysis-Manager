@@ -1964,6 +1964,47 @@ namespace AnalysisManagerBase.AnalysisTool
             return string.Empty;
         }
 
+        /// <summary>
+        /// Determine the path to python.exe
+        /// </summary>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="paramName">Parameter name that specifies the directory with python.exe</param>
+        /// <returns>The path to the python.exe, or an empty string if the manager parameter is not defined or if python.exe does not exist</returns>
+        protected static string GetPythonProgLoc(IMgrParams mgrParams, out string errorMessage, string paramName = "Python3ProgLoc")
+        {
+            // Verify that Python.exe exists
+
+            // paramName should be either Python3ProgLoc or FragPipePython3ProgLoc
+            //   Python3ProgLoc: "C:\Python3"
+            //   FragPipePython3ProgLoc: "C:\DMS_Programs\FragPipe\FragPipe_v23.1\python"
+
+            var pythonProgLoc = mgrParams.GetParam(paramName);
+
+            if (string.IsNullOrEmpty(pythonProgLoc))
+            {
+                errorMessage = string.Format("Parameter '{0}' not defined for this manager", paramName);
+                return string.Empty;
+            }
+
+            if (!Directory.Exists(pythonProgLoc))
+            {
+                errorMessage = "Python directory not found: " + pythonProgLoc;
+                return string.Empty;
+            }
+
+            var pythonExe = new FileInfo(Path.Combine(pythonProgLoc, "python.exe"));
+
+            if (!pythonExe.Exists)
+            {
+                errorMessage = "Python executable not found: " + pythonExe.FullName;
+                return string.Empty;
+            }
+
+            errorMessage = string.Empty;
+            return pythonExe.FullName;
+        }
+
         private static short GetManagerDebugLevel(
             string connectionString,
             string managerName,

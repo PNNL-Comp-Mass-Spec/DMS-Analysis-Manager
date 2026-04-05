@@ -97,6 +97,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDiaNNPlugin"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerFragPipePlugin", "Plugins\AM_FragPipe_Plugin\AnalysisManagerFragPipePlugin.csproj", "{B21AA487-8B9E-46B7-BD72-B5E0F5A4A05D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerNOMAnnotationPlugin", "Plugins\AM_NOM_Annotation_Plugin\AnalysisManagerNOMAnnotationPlugin.csproj", "{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -291,6 +293,10 @@ Global
 		{B21AA487-8B9E-46B7-BD72-B5E0F5A4A05D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B21AA487-8B9E-46B7-BD72-B5E0F5A4A05D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B21AA487-8B9E-46B7-BD72-B5E0F5A4A05D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

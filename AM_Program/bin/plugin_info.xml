@@ -346,7 +346,10 @@
 		Tool="FragPipe"
 		Class="AnalysisManagerFragPipePlugIn.AnalysisToolRunnerFragPipe"
 		AssemblyFile="AnalysisManagerFragPipePlugIn.dll" />
-
+	<ToolRunner
+		Tool="NOM_Annotation"
+		Class="AnalysisManagerNOMAnnotationPlugin.AnalysisToolRunnerNOMAnnotation"
+		AssemblyFile="AnalysisManagerNOMAnnotationPlugin.dll" />
 </ToolRunners>
 
 <Resourcers>
@@ -694,7 +697,10 @@
 		Tool="FragPipe"
 		Class="AnalysisManagerFragPipePlugIn.AnalysisResourcesFragPipe"
 		AssemblyFile="AnalysisManagerFragPipePlugIn.dll" />
-
+	<Resourcer
+		Tool="NOM_Annotation"
+		Class="AnalysisManagerNOMAnnotationPlugin.AnalysisResourcesNOMAnnotation"
+		AssemblyFile="AnalysisManagerNOMAnnotationPlugin.dll" />
 </Resourcers>
 
 <DTAGenerators Note="This section is obsolete">

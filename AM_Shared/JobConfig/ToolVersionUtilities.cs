@@ -718,6 +718,37 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
+        /// Determines the version info for a Python script file (file modification date and file size)
+        /// </summary>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="filePath">Path to the Python script</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool StoreToolVersionInfoPythonScript(ref string toolVersionInfo, string filePath)
+        {
+            try
+            {
+                var pythonFile = new FileInfo(filePath);
+
+                if (!pythonFile.Exists)
+                {
+                    OnWarningEvent("File not found by StoreToolVersionInfoPythonScript: " + filePath);
+                    return false;
+                }
+
+                var nameAndVersion = string.Format("{0}, Size_Bytes={1}, Date_Modified={2}", pythonFile.Name, pythonFile.Length, pythonFile.LastWriteTime);
+
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception determining File Version for " + Path.GetFileName(filePath), ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Determines the version info for a .NET DLL or executable using System.Diagnostics.FileVersionInfo
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>

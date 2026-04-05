@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AnalysisManagerNOMAnnotationPlugin</RootNamespace>
+    <AssemblyName>AnalysisManagerNOMAnnotationPlugin</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>IDE0028</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>IDE0028</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ProteowizardWrapper">
+      <HintPath>..\..\AM_Common\ProteowizardWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="pwiz_bindings_cli">
+      <HintPath>..\..\AM_Common\pwiz_bindings_cli.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AnalysisResourcesNOMAnnotation.cs" />
+    <Compile Include="AnalysisToolRunnerNOMAnnotation.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\version.json">
+      <Link>Properties\version.json</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning">
+      <Version>3.9.50</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.4</Version>
+    </PackageReference>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.9.20</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if exist "$(TargetDir)pwiz_bindings_cli.dll" del "$(TargetDir)pwiz_bindings_cli.dll"
+xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /F /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Common\" /F /D /Y
+xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin" /F /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin" /F /D /Y</PostBuildEvent>
+  </PropertyGroup>
+</Project>

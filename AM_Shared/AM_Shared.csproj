@@ -73,6 +73,12 @@
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
+    <Reference Include="ProteowizardWrapper">
+      <HintPath>..\AM_Common\ProteowizardWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="pwiz_bindings_cli">
+      <HintPath>..\AM_Common\pwiz_bindings_cli.dll</HintPath>
+    </Reference>
     <Reference Include="SequestResultsProcessor">
       <HintPath>..\AM_Common\SequestResultsProcessor.dll</HintPath>
     </Reference>
@@ -211,7 +217,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
+    <PostBuildEvent>if exist "$(TargetDir)pwiz_bindings_cli.dll" del "$(TargetDir)pwiz_bindings_cli.dll"
+
+xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
 
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y

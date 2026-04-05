@@ -82,6 +82,12 @@
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
+    <Reference Include="ProteowizardWrapper">
+      <HintPath>..\AM_Common\ProteowizardWrapper.dll</HintPath>
+    </Reference>
+    <Reference Include="pwiz_bindings_cli">
+      <HintPath>..\AM_Common\pwiz_bindings_cli.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -176,7 +182,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
+    <PostBuildEvent>if exist "$(TargetDir)pwiz_bindings_cli.dll" del "$(TargetDir)pwiz_bindings_cli.dll"
+
 xcopy "$(ProjectDir)..\AM_Common\Ape.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\AScore_DLL.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\Cyclops.dll" "$(TargetDir)" /D /Y
