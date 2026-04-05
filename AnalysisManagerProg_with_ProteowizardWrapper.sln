@@ -1,0 +1,48 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProg_with_ProteowizardWrapper", "AM_Program\AnalysisManagerProg_with_ProteowizardWrapper.csproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "Plugins\AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj", "{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerNOMAnnotationPlugin_with_ProteowizardWrapper", "Plugins\AM_NOM_Annotation_Plugin\AnalysisManagerNOMAnnotationPlugin_with_ProteowizardWrapper.csproj", "{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProteowizardWrapper", "..\..\ProteowizardWrapper\ProteowizardWrapper.csproj", "{DACEE7D5-5A6A-4001-9602-FAB1A9A2DE59}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared_with_ProteowizardWrapper", "AM_Shared\AM_Shared_with_ProteowizardWrapper.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75F35A1C-8CC2-4156-9500-FE560C8DCAFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DACEE7D5-5A6A-4001-9602-FAB1A9A2DE59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DACEE7D5-5A6A-4001-9602-FAB1A9A2DE59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DACEE7D5-5A6A-4001-9602-FAB1A9A2DE59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DACEE7D5-5A6A-4001-9602-FAB1A9A2DE59}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9AE7DDA8-86BF-4B95-81C2-FCA66D4D6798}
+	EndGlobalSection
+EndGlobal

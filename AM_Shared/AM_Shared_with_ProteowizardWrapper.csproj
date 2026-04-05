@@ -1,0 +1,240 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AnalysisManagerBase</RootNamespace>
+    <AssemblyName>AM_Shared</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>IDE0028, IDE0290</NoWarn>
+    <DocumentationFile>bin\Debug\AnalysisManagerBase.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NoWarn>IDE0028</NoWarn>
+    <DocumentationFile>bin\Release\AnalysisManagerBase.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CondenseCDTAFile">
+      <HintPath>..\AM_Common\CondenseCDTAFile.dll</HintPath>
+    </Reference>
+    <Reference Include="DMSUpdateManager">
+      <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
+    </Reference>
+    <Reference Include="DTAtoMGF">
+      <HintPath>..\AM_Common\DTAtoMGF.dll</HintPath>
+    </Reference>
+    <Reference Include="FastaFileSplitterDLL">
+      <HintPath>..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
+    </Reference>
+    <Reference Include="FileConcatenator">
+      <HintPath>..\AM_Common\FileConcatenator.dll</HintPath>
+    </Reference>
+    <Reference Include="FlexibleFileSortUtility">
+      <HintPath>..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
+    </Reference>
+    <Reference Include="Mage">
+      <HintPath>..\AM_Common\Mage.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileSystemGlobbing, Version=9.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL" />
+    <Reference Include="MSDataFileReader">
+      <HintPath>..\AM_Common\MSDataFileReader.dll</HintPath>
+    </Reference>
+    <Reference Include="MSFileInfoScannerInterfaces">
+      <HintPath>..\AM_Common\MSFileInfoScannerInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="OrganismDatabaseHandler">
+      <HintPath>..\AM_Common\OrganismDatabaseHandler.dll</HintPath>
+    </Reference>
+    <Reference Include="ParamFileGenerator">
+      <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
+    </Reference>
+    <Reference Include="PHRPReader">
+      <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
+    <Reference Include="pwiz_bindings_cli">
+      <HintPath>..\AM_Common\pwiz_bindings_cli.dll</HintPath>
+    </Reference>
+    <Reference Include="SequestResultsProcessor">
+      <HintPath>..\AM_Common\SequestResultsProcessor.dll</HintPath>
+    </Reference>
+    <Reference Include="SpectraTypeClassifier">
+      <HintPath>..\AM_Common\SpectraTypeClassifier.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ProteowizardWrapper\ProteowizardWrapper.csproj">
+      <Project>{dacee7d5-5a6a-4001-9602-fab1a9a2de59}</Project>
+      <Name>ProteowizardWrapper</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AnalysisTool\AnalysisMgrBase.cs" />
+    <Compile Include="AnalysisTool\AnalysisResources.cs" />
+    <Compile Include="AnalysisTool\AnalysisResults.cs" />
+    <Compile Include="AnalysisTool\AnalysisToolRunnerBase.cs" />
+    <Compile Include="AnalysisTool\IAnalysisResources.cs" />
+    <Compile Include="AnalysisTool\IToolRunner.cs" />
+    <Compile Include="AnalysisTool\RunDosProgram.cs" />
+    <Compile Include="DataFileTools\CDTAUtilities.cs" />
+    <Compile Include="DataFileTools\DataPackageInfo.cs" />
+    <Compile Include="DataFileTools\DatasetFileRetriever.cs" />
+    <Compile Include="DataFileTools\DatasetNameMapUtility.cs" />
+    <Compile Include="DataFileTools\FastaFileUtilities.cs" />
+    <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
+    <Compile Include="DataFileTools\ISpectraFilter.cs" />
+    <Compile Include="DataFileTools\PrecursorInfoFileCreator.cs" />
+    <Compile Include="DataFileTools\ProteinCollectionInfo.cs" />
+    <Compile Include="DataFileTools\ProteowizardTools.cs" />
+    <Compile Include="DataFileTools\ScanStatsGenerator.cs" />
+    <Compile Include="DataFileTools\SplitCattedFiles.cs" />
+    <Compile Include="DataFileTools\SplitFastaFileUtilities.cs" />
+    <Compile Include="DataFileTools\SplitMGFFile.cs" />
+    <Compile Include="DataFileTools\SqLiteUtilities.cs" />
+    <Compile Include="DBTask.cs" />
+    <Compile Include="ExceptionClasses.cs" />
+    <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
+    <Compile Include="FileAndDirectoryTools\DirectorySpaceTools.cs" />
+    <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
+    <Compile Include="FileAndDirectoryTools\FileSearch.cs" />
+    <Compile Include="FileAndDirectoryTools\FragPipeLibFinder.cs" />
+    <Compile Include="FileAndDirectoryTools\SubdirectoryFileCompressor.cs" />
+    <Compile Include="FileAndDirectoryTools\WorkingDirectoryMetadata.cs" />
+    <Compile Include="FileAndDirectoryTools\ZipFileToolsExtensions.cs" />
+    <Compile Include="Global.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IMgrParams.cs" />
+    <Compile Include="JobConfig\AnalysisJob.cs" />
+    <Compile Include="JobConfig\AssemblyTools.cs" />
+    <Compile Include="JobConfig\DataPackageDatasetInfo.cs" />
+    <Compile Include="JobConfig\DataPackageFileHandler.cs" />
+    <Compile Include="JobConfig\DataPackageInfoLoader.cs" />
+    <Compile Include="JobConfig\DataPackageJobInfo.cs" />
+    <Compile Include="JobConfig\FormattedXMLWriter.cs" />
+    <Compile Include="JobConfig\IJobParams.cs" />
+    <Compile Include="JobConfig\JobParameter.cs" />
+    <Compile Include="JobConfig\MyEMSLUtilities.cs" />
+    <Compile Include="JobConfig\SummaryFile.cs" />
+    <Compile Include="JobConfig\ToolVersionUtilities.cs" />
+    <Compile Include="OfflineJobs\OfflineProcessing.cs" />
+    <Compile Include="OfflineJobs\RemoteMonitor.cs" />
+    <Compile Include="OfflineJobs\RemoteTransferUtility.cs" />
+    <Compile Include="OfflineJobs\XMLUtils.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShortestUniquePrefix.cs" />
+    <Compile Include="StatusReporting\DBStatusLogger.cs" />
+    <Compile Include="StatusReporting\IStatusFile.cs" />
+    <Compile Include="StatusReporting\LoggerBase.cs" />
+    <Compile Include="StatusReporting\MemoryUsageLogger.cs" />
+    <Compile Include="StatusReporting\MessageContainer.cs" />
+    <Compile Include="StatusReporting\MessageQueueLogger.cs" />
+    <Compile Include="StatusReporting\MessageSender.cs" />
+    <Compile Include="StatusReporting\StatusFile.cs" />
+    <Compile Include="StatusReporting\SystemProcessInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\version.json">
+      <Link>Properties\version.json</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Apache.NMS.ActiveMQ">
+      <Version>2.2.0</Version>
+    </PackageReference>
+    <PackageReference Include="CsvHelper">
+      <Version>33.1.0</Version>
+    </PackageReference>
+    <PackageReference Include="MathNet.Numerics">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="MyEMSL-Reader">
+      <Version>2.1.144</Version>
+    </PackageReference>
+    <PackageReference Include="Nerdbank.GitVersioning">
+      <Version>3.9.50</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.4</Version>
+    </PackageReference>
+    <PackageReference Include="PRISM-DatabaseUtils">
+      <Version>1.5.10</Version>
+    </PackageReference>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.9.20</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.1.23</Version>
+    </PackageReference>
+    <PackageReference Include="ProteinFileReader">
+      <Version>3.1.0</Version>
+    </PackageReference>
+    <PackageReference Include="PSI_Interface">
+      <Version>2.8.7</Version>
+    </PackageReference>
+    <PackageReference Include="SharpZipLib">
+      <Version>1.4.2</Version>
+    </PackageReference>
+    <PackageReference Include="SSH.NET">
+      <Version>2025.1.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.118</Version>
+    </PackageReference>
+    <PackageReference Include="ThermoRawFileReader">
+      <Version>4.2.63</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>3.8.30</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if exist "$(TargetDir)pwiz_bindings_cli.dll" del "$(TargetDir)pwiz_bindings_cli.dll"
+
+xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
+
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)PRISMDatabaseUtils.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+
+xcopy "$(TargetDir)CsvHelper.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)ThermoRawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+
+xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
+xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>
