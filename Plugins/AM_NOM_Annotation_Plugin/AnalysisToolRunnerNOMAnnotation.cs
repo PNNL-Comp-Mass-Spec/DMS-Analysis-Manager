@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -140,7 +141,6 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 // Add the current job data to the summary file
                 // UpdateSummaryFile();
 
-
                 if (!processingSuccess)
                 {
                     // Something went wrong
@@ -159,6 +159,54 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 LogError("Error in NOMAnnotationPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private NaturalOrganicMatterStats ComputeMedianNOMStats(List<NaturalOrganicMatterStats> nomStatsAllScans)
+        {
+            var medianStats = new NaturalOrganicMatterStats(1);
+
+            if (nomStatsAllScans.Count == 0)
+            {
+                return medianStats;
+            }
+
+            foreach (var metric in nomStatsAllScans[0].IntegerMetrics)
+            {
+                var metricName = metric.Key;
+                var metricValues = new List<double>();
+
+                foreach (var entry in nomStatsAllScans)
+                {
+                    if (entry.IntegerMetrics.TryGetValue(metricName, out var metricValue))
+                    {
+                        metricValues.Add(metricValue);
+                    }
+                }
+
+                var medianValue = MathNet.Numerics.Statistics.Statistics.Median(metricValues);
+
+                medianStats.IntegerMetrics.Add(metricName, (int)medianValue);
+            }
+
+            foreach (var metric in nomStatsAllScans[0].NumericMetrics)
+            {
+                var metricName = metric.Key;
+                var metricValues = new List<double>();
+
+                foreach (var entry in nomStatsAllScans)
+                {
+                    if (entry.NumericMetrics.TryGetValue(metricName, out var metricValue))
+                    {
+                        metricValues.Add(metricValue);
+                    }
+                }
+
+                var medianValue = MathNet.Numerics.Statistics.Statistics.Median(metricValues);
+
+                medianStats.NumericMetrics.Add(metricName, medianValue);
+            }
+
+            return medianStats;
         }
 
         /// <summary>
@@ -559,13 +607,11 @@ namespace AnalysisManagerNOMAnnotationPlugin
             // arguments.Append(" --ppm-tolerance 1.0");
 
             // Create a batch file to run the command
-            // Capture the console output (including output to the error stream) via redirection symbols:
-            //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
             var batchFilePath = Path.Combine(mWorkDir, "Run_NOM_Annotation.bat");
             mJobParams.AddResultFileToSkip(Path.GetFileName(batchFilePath));
 
-            var batchFileCmdLine = pythonExe.FullName + " " + pythonScriptFile.FullName + " " + arguments + " > " + NOM_ANNOTATION_CONSOLE_OUTPUT_FILE + " 2>&1";
+            var batchFileCmdLine = pythonExe.FullName + " " + pythonScriptFile.FullName + " " + arguments;
 
             LogDebug("Creating batch file at " + batchFilePath);
 
@@ -584,10 +630,11 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
             var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
-                CreateNoWindow = false,
-                CacheStandardOutput = false,
-                EchoOutputToConsole = false,
-                WriteConsoleOutputToFile = false
+                CreateNoWindow = true,
+                CacheStandardOutput = true,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = true,
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, NOM_ANNOTATION_CONSOLE_OUTPUT_FILE)
             };
 
             RegisterEvents(cmdRunner);
@@ -616,6 +663,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
             if (success)
             {
+                mJobParams.AddResultFileToSkip(NOM_ANNOTATION_CONSOLE_OUTPUT_FILE);
                 return true;
             }
 
@@ -629,6 +677,67 @@ namespace AnalysisManagerNOMAnnotationPlugin
             }
 
             return false;
+        }
+
+        private string CreateNOMStatsXML(int datasetID, string datasetName, NaturalOrganicMatterStats nomStats)
+        {
+
+            var xmlSettings = new XmlWriterSettings
+            {
+                CheckCharacters = true,
+                Indent = true,
+                IndentChars = "  ",
+                Encoding = Encoding.UTF8,
+                CloseOutput = false        // Do not close output automatically so that the MemoryStream can be read after the XmlWriter has been closed
+            };
+
+            // Cache the XML using a MemoryStream.  Here, the stream encoding is set by the XmlWriter
+            // and so you see the attribute encoding="UTF-8" in the opening XML declaration encoding
+            // (since we used xmlSettings.Encoding = Encoding.UTF8)
+            //
+            var memStream = new MemoryStream();
+            var writer = XmlWriter.Create(memStream, xmlSettings);
+
+            writer.WriteStartDocument(true);
+
+            // Write the beginning of the "Root" element.
+            writer.WriteStartElement("NOMStats");
+
+            writer.WriteStartElement("Dataset");
+
+            if (datasetID > 0)
+            {
+                writer.WriteAttributeString("DatasetID", datasetID.ToString());
+            }
+            writer.WriteString(datasetName);
+            writer.WriteEndElement();       // Dataset EndElement
+
+            writer.WriteStartElement("metrics");
+
+            foreach (var metric in nomStats.IntegerMetrics)
+            {
+                writer.WriteElementString(metric.Key, metric.Value.ToString());
+            }
+
+            foreach (var metric in nomStats.NumericMetrics)
+            {
+                writer.WriteElementString(metric.Key, metric.Value.ToString(CultureInfo.InvariantCulture));
+            }
+
+            writer.WriteEndElement();       // metrics
+
+            writer.WriteEndElement();  // End the "Root" element (NOMStats)
+
+            writer.WriteEndDocument(); // End the document
+
+            writer.Close();
+
+            // Now Rewind the memory stream and output as a string
+            memStream.Position = 0;
+            var reader = new StreamReader(memStream);
+
+            // Return the XML as text
+            return reader.ReadToEnd();
         }
 
         private void MonitorScanTimeLoadingProgress(int scansLoaded, int totalScans)
@@ -672,7 +781,11 @@ namespace AnalysisManagerNOMAnnotationPlugin
         {
             // Example Console output
 
-            // ...
+            // Run_NOM_Annotation.bat
+            // --------------------------------------------------------------------------------
+            //
+            // C:\DMS_WorkDir>C:\Python3\python.exe C:\DMS_Programs\NOMAnnotation\smaqc_nom_mass_spec_metrics.py  --input F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\Scan_1.txt --output F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\Scan_1_results.json --ref-masslist C:\DMS_WorkDir\Hawkes_neg.ref --formula-table C:\DMS_Programs\NOMAnnotation\master_formula_table.json
+            //
 
             try
             {
@@ -732,87 +845,54 @@ namespace AnalysisManagerNOMAnnotationPlugin
         }
 
         /// <summary>
-        /// Read NOM metrics from a JSON file, convert to XML, and store in the database
+        /// Read NOM metrics from one or more JSON files, convert to XML, and store in the database
         /// </summary>
         /// <param name="datasetID">Dataset ID</param>
         /// <param name="datasetName">Dataset name</param>
-        /// <param name="nomStatsJSONFile">NOM stats .json file</param>
+        /// <param name="nomStatsJSONFiles">NOM stats .json files (one per scan)</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool PostDatasetNOMStatsXml(int datasetID, string datasetName, FileSystemInfo nomStatsJSONFile)
+        private bool PostDatasetNOMStatsXml(int datasetID, string datasetName, List<FileInfo> nomStatsJSONFiles)
         {
             try
             {
-                // Convert JSON to XML
-                var jsonText = File.ReadAllText(nomStatsJSONFile.FullName);
-                var jsonInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonText);
+                var nomStatsAllScans = new List<NaturalOrganicMatterStats>();
 
-                var xmlSettings = new XmlWriterSettings
+                var scanNumber = 0;
+
+                foreach (var jsonFile in nomStatsJSONFiles)
                 {
-                    CheckCharacters = true,
-                    Indent = true,
-                    IndentChars = "  ",
-                    Encoding = Encoding.UTF8,
-                    CloseOutput = false        // Do not close output automatically so that the MemoryStream can be read after the XmlWriter has been closed
-                };
+                    scanNumber++;
 
-                // Cache the XML using a MemoryStream.  Here, the stream encoding is set by the XmlWriter
-                // and so you see the attribute encoding="UTF-8" in the opening XML declaration encoding
-                // (since we used xmlSettings.Encoding = Encoding.UTF8)
-                //
-                var memStream = new MemoryStream();
-                var writer = XmlWriter.Create(memStream, xmlSettings);
+                    var currentScanNOMStats = ReadNOMStatsJsonFile(scanNumber, jsonFile);
 
-                writer.WriteStartDocument(true);
-
-                // Write the beginning of the "Root" element.
-                writer.WriteStartElement("NOMStats");
-
-                writer.WriteStartElement("Dataset");
-
-                if (datasetID > 0)
-                {
-                    writer.WriteAttributeString("DatasetID", datasetID.ToString());
-                }
-                writer.WriteString(datasetName);
-                writer.WriteEndElement();       // Dataset EndElement
-
-
-                writer.WriteStartElement("metrics");
-
-                foreach (var entry in jsonInfo)
-                {
-                    if (!entry.Key.Equals("metrics"))
-                    {
-                        continue;
-                    }
-
-                    // ToDo: debug this
-                    foreach (var metric in (Dictionary<string, object>)entry.Value)
-                    {
-                        writer.WriteElementString(metric.Key, metric.Value.ToString());
-                    }
+                    nomStatsAllScans.Add(currentScanNOMStats);
                 }
 
-                writer.WriteEndElement();       // metrics
+                if (nomStatsAllScans.Count == 0)
+                {
+                    LogError("Error reading NOM Stats .json files; no metrics were stored in nomStatsAllScans");
+                    return false;
+                }
 
-                writer.WriteEndElement();  // End the "Root" element (NOMStats)
+                NaturalOrganicMatterStats nomStats;
 
-                writer.WriteEndDocument(); // End the document
+                if (nomStatsAllScans.Count > 1)
+                {
+                    // Compute median values of the metrics
+                    nomStats = ComputeMedianNOMStats(nomStatsAllScans);
+                }
+                else
+                {
+                    nomStats = nomStatsAllScans[0];
+                }
 
-                writer.Close();
-
-                // Now Rewind the memory stream and output as a string
-                memStream.Position = 0;
-                var reader = new StreamReader(memStream);
-
-                // Return the XML as text
-                var nomStatsXML = reader.ReadToEnd();
+                var nomStatsXML = CreateNOMStatsXML(datasetID, datasetName, nomStats);
 
                 return PostDatasetNOMStatsXml(datasetID, nomStatsXML);
             }
             catch (Exception ex)
             {
-                LogError("Error converting NOM stats from JSON to XML", ex);
+                LogError("Error reading NOM Stats .json files", ex);
                 return false;
             }
         }
@@ -916,6 +996,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddParameter(cmd, "@datasetID", SqlType.Int).Value = datasetID;
                 dbTools.AddParameter(cmd, "@nomStatsXML", SqlType.XML).Value = nomStatsXMLClean;
+                dbTools.AddParameter(cmd, "@nomAnnotationJob", SqlType.Int).Value = mJob;
 
                 var result = dbTools.ExecuteSP(cmd);
 
@@ -959,7 +1040,6 @@ namespace AnalysisManagerNOMAnnotationPlugin
                     var datasetID = entry.Key;
                     var datasetName = datasetsByID[datasetID];
 
-                    // ToDo: verify that calling LogError here updates mMessage (it should, due to how function overloading works)
                     if (entry.Value.Count == 0)
                     {
                         LogError("No result files were found for dataset ID {0}; cannot send NOM Stats to the database", datasetID);
@@ -967,19 +1047,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                         continue;
                     }
 
-                    bool successCurrent;
-
-                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                    if (entry.Value.Count > 1)
-                    {
-                        // The dataset had multiple scans; only store the results for the first scan
-                        // Future ToDo: compute median values of the metrics
-                        successCurrent = PostDatasetNOMStatsXml(datasetID, datasetName, entry.Value[0]);
-                    }
-                    else
-                    {
-                        successCurrent = PostDatasetNOMStatsXml(datasetID, datasetName, entry.Value[0]);
-                    }
+                    var successCurrent = PostDatasetNOMStatsXml(datasetID, datasetName, entry.Value);
 
                     if (!successCurrent)
                         success = false;
@@ -992,6 +1060,83 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 LogError("Error post-processing results", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private NaturalOrganicMatterStats ReadNOMStatsJsonFile(int scanNumber, FileSystemInfo nomStatsJSONFile)
+        {
+            // Read metrics from the JSON file
+
+            // Example content in the _results.json file
+
+            // ReSharper disable CommentTypo
+            // {
+            //   "run_utc": "2026-04-06T22:52:48.965266+00:00",
+            //   "status": "ok",
+            //   "warnings": [],
+            //   "errors": [],
+            //   "arguments": {
+            //     "input": "F:\\Documents\\Projects\\DataMining\\DMS_Managers\\Analysis_Manager\\AM_Program\\bin\\Scan_1.txt",
+            //     "output": "F:\\Documents\\Projects\\DataMining\\DMS_Managers\\Analysis_Manager\\AM_Program\\bin\\Scan_1_results.json",
+            //     "ref_masslist": "C:\\DMS_WorkDir\\Hawkes_neg.ref",
+            //     "formula_table": "C:\\DMS_Programs\\NOMAnnotation\\master_formula_table.json",
+            //     "ppm_tolerance": 1.0
+            //   },
+            //   "metrics": {
+            //     "metrics": {
+            //       "intrinsic_peak_count": 10000,
+            //       "intrinsic_mz_median": 459.627783040795,
+            //       "intrinsic_mz_skewness": 0.1377222092327043,
+            //       ...
+            //       "annotation_weighted_ai_mod": 0.3580379796439955,
+            //       "annotation_non_isotopologue_feature_count": 3408,
+            //       "annotation_non_isotopologue_intensity_fraction_percent": 83.36760301773108
+            //     },
+            //     "metric_labels": {
+            //       "intrinsic_peak_count": "Peak count",
+            //       "intrinsic_mz_median": "Median m/z",
+            //       ...
+            //       "annotation_non_isotopologue_feature_count": "Non-isotopologue features used",
+            //       "annotation_non_isotopologue_intensity_fraction_percent": "Assigned intensity used (non-isotopologue) %"
+            //     },
+            //     "schema_version": "2.0"
+            //   }
+            // }
+
+            // ReSharper restore CommentTypo
+
+            var nomStats = new NaturalOrganicMatterStats(scanNumber);
+
+            var jsonText = File.ReadAllText(nomStatsJSONFile.FullName);
+
+            foreach (var entry in JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonText))
+            {
+                if (!entry.Key.Equals("metrics"))
+                {
+                    continue;
+                }
+
+                foreach (var item in ((Newtonsoft.Json.Linq.JObject)entry.Value).Properties())
+                {
+                    if (!item.Name.Equals("metrics"))
+                    {
+                        continue;
+                    }
+
+                    foreach (var metric in ((Newtonsoft.Json.Linq.JObject)item.Value).Properties())
+                    {
+                        if (metric.Name.EndsWith("_count", StringComparison.OrdinalIgnoreCase))
+                        {
+                            nomStats.IntegerMetrics.Add(metric.Name, int.TryParse(metric.Value.ToString(), out var value) ? value : 0);
+                        }
+                        else
+                        {
+                            nomStats.NumericMetrics.Add(metric.Name, double.TryParse(metric.Value.ToString(), out var value) ? value : 0);
+                        }
+                    }
+                }
+            }
+
+            return nomStats;
         }
 
         private void StoreConsoleErrorMessage(StreamReader reader, string dataLine)

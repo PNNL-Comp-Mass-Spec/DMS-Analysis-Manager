@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="AnalysisResourcesNOMAnnotation.cs" />
     <Compile Include="AnalysisToolRunnerNOMAnnotation.cs" />
+    <Compile Include="NaturalOrganicMatterStats.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
