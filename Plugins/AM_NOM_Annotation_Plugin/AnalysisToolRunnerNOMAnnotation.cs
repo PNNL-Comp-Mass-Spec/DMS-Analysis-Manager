@@ -323,11 +323,15 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
                             if (analysisBafFile.Exists)
                             {
-                                successCurrentDataset = ComputeNOMMetricsForOneDataset(pythonExe, pythonScriptFile, referenceMassFilePath, analysisBafFile, datasetResultFiles);
+                                successCurrentDataset = ComputeNOMMetricsForOneDataset(
+                                    datasetName, analysisBafFile, datasetResultFiles,
+                                    pythonExe, pythonScriptFile, referenceMassFilePath);
                             }
                             else if (analysisTdfFile.Exists)
                             {
-                                successCurrentDataset = ComputeNOMMetricsForOneDataset(pythonExe, pythonScriptFile, referenceMassFilePath, analysisTdfFile, datasetResultFiles);
+                                successCurrentDataset = ComputeNOMMetricsForOneDataset(
+                                    datasetName, analysisTdfFile, datasetResultFiles,
+                                    pythonExe, pythonScriptFile, referenceMassFilePath);
                             }
                             else
                             {
@@ -374,18 +378,20 @@ namespace AnalysisManagerNOMAnnotationPlugin
         /// <summary>
         /// Call Python script smaqc_nom_mass_spec_metrics.py to annotate natural organic matter features in the given dataset
         /// </summary>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetFile">Dataset file (analysis.baf or analysis.tdf)</param>
+        /// <param name="datasetResultFiles">List of JSON result files for the current dataset (one per scan)</param>
         /// <param name="pythonExe">Python .exe</param>
         /// <param name="pythonScriptFile">Python script fil</param>
         /// <param name="referenceMassFilePath">Reference mass file path</param>
-        /// <param name="datasetFile">Dataset file (analysis.baf or analysis.tdf)</param>
-        /// <param name="datasetResultFiles">List of JSON result files for the current dataset (one per scan)</param>
         /// <returns>True if successful, false if an error</returns>
         private bool ComputeNOMMetricsForOneDataset(
+            string datasetName,
+            FileInfo datasetFile,
+            ICollection<FileInfo> datasetResultFiles,
             FileSystemInfo pythonExe,
             FileInfo pythonScriptFile,
-            string referenceMassFilePath,
-            FileInfo datasetFile,
-            ICollection<FileInfo> datasetResultFiles)
+            string referenceMassFilePath)
         {
             try
             {
@@ -408,7 +414,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 }
                 else
                 {
-                    success = ComputeNOMMetricsForOneDataset(pythonExe, pythonScriptFile, referenceMassFilePath, msDataFileReader, datasetResultFiles);
+                    success = ComputeNOMMetricsForOneDataset(datasetName, msDataFileReader, datasetResultFiles, pythonExe, pythonScriptFile, referenceMassFilePath);
                 }
 
                 msDataFileReader.Dispose();
@@ -424,11 +430,12 @@ namespace AnalysisManagerNOMAnnotationPlugin
         }
 
         private bool ComputeNOMMetricsForOneDataset(
+            string datasetName,
+            MSDataFileReader msDataFileReader,
+            ICollection<FileInfo> datasetResultFiles,
             FileSystemInfo pythonExe,
             FileInfo pythonScriptFile,
-            string referenceMassFilePath,
-            MSDataFileReader msDataFileReader,
-            ICollection<FileInfo> datasetResultFiles)
+            string referenceMassFilePath)
         {
             Console.WriteLine();
             LogDebug("Obtaining scan times and MSLevels (this could take several minutes)");
@@ -519,7 +526,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                     }
 
                     // Create file massSpectrumFile using msDataSpectrum.Mzs and msDataSpectrum.Intensities (which should both have msDataSpectrum.Mzs.Length items)
-                    var massSpectrumFile = new FileInfo(string.Format("Scan_{0}.txt", scanNumber));
+                    var massSpectrumFile = new FileInfo(Path.Combine(mWorkDir, string.Format("{0}_Scan_{1}.txt", datasetName, scanNumber)));
                     mJobParams.AddResultFileToSkip(massSpectrumFile.Name);
 
                     LogDebug("Writing spectral data file file " + massSpectrumFile.FullName);
@@ -532,7 +539,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                         }
                     }
 
-                    var successCurrent = ComputeNOMMetricsForSingleScan(pythonExe, pythonScriptFile, massSpectrumFile, referenceMassFilePath, datasetResultFiles);
+                    var successCurrent = ComputeNOMMetricsForSingleScan(massSpectrumFile, datasetResultFiles, pythonExe, pythonScriptFile, referenceMassFilePath);
 
                     if (!successCurrent)
                         success = false;
@@ -558,11 +565,11 @@ namespace AnalysisManagerNOMAnnotationPlugin
         }
 
         private bool ComputeNOMMetricsForSingleScan(
+            FileInfo massSpectrumFile,
+            ICollection<FileInfo> resultFiles,
             FileSystemInfo pythonExe,
             FileInfo pythonScriptFile,
-            FileInfo massSpectrumFile,
-            string referenceMassFilePath,
-            ICollection<FileInfo> resultFiles
+            string referenceMassFilePath
             )
         {
             // Set up and execute a program runner to compute the NOM metrics
