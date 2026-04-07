@@ -618,7 +618,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
             var batchFilePath = Path.Combine(mWorkDir, "Run_NOM_Annotation.bat");
             mJobParams.AddResultFileToSkip(Path.GetFileName(batchFilePath));
 
-            var batchFileCmdLine = pythonExe.FullName + " " + pythonScriptFile.FullName + " " + arguments;
+            var batchFileCmdLine = pythonExe.FullName + " " + pythonScriptFile.FullName + arguments;
 
             LogDebug("Creating batch file at " + batchFilePath);
 
@@ -786,13 +786,16 @@ namespace AnalysisManagerNOMAnnotationPlugin
         /// <param name="consoleOutputFilePath">Console output file path</param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
-            // Example Console output
+            // ReSharper disable CommentTypo
+
+            // Example Console output:
 
             // Run_NOM_Annotation.bat
             // --------------------------------------------------------------------------------
             //
-            // C:\DMS_WorkDir>C:\Python3\python.exe C:\DMS_Programs\NOMAnnotation\smaqc_nom_mass_spec_metrics.py  --input F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\Scan_1.txt --output F:\Documents\Projects\DataMining\DMS_Managers\Analysis_Manager\AM_Program\bin\Scan_1_results.json --ref-masslist C:\DMS_WorkDir\Hawkes_neg.ref --formula-table C:\DMS_Programs\NOMAnnotation\master_formula_table.json
-            //
+            // C:\DMS_WorkDir>C:\Python3\python.exe C:\DMS_Programs\NOMAnnotation\smaqc_nom_mass_spec_metrics.py  --input C:\DMS_WorkDir\Background_Magnolia_300SA_12Mar26_000001_Scan_1.txt --output C:\DMS_WorkDir\Background_Magnolia_300SA_12Mar26_000001_Scan_1_results.json --ref-masslist C:\DMS_WorkDir\Hawkes_neg.ref --formula-table C:\DMS_Programs\NOMAnnotation\master_formula_table.json
+
+            // ReSharper restore CommentTypo
 
             try
             {
