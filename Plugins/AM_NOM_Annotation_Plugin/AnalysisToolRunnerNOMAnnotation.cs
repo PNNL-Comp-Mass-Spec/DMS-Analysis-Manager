@@ -499,25 +499,25 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 }
             }
 
-            var spectrumCount = scanTimes.Length;
+            var scanCount = scanTimes.Length;
 
             Console.WriteLine();
             LogDebug("Reading spectra");
 
             var lastStatusProgressTime = DateTime.UtcNow;
 
-            for (var spectrumIndex = 0; spectrumIndex < spectrumCount; spectrumIndex++)
+            for (var scanIndex = 0; scanIndex < scanCount; scanIndex++)
             {
-                var scanNumber = spectrumIndex + 1;
+                var scanNumber = scanIndex + 1;
 
                 try
                 {
                     // Obtain the raw mass spectrum
-                    var msDataSpectrum = msDataFileReader.GetSpectrum(spectrumIndex);
+                    var msDataSpectrum = msDataFileReader.GetSpectrum(scanIndex);
 
-                    if (spectrumIndex >= minScanIndexWithoutScanTimes && msDataSpectrum.Level is >= byte.MinValue and <= byte.MaxValue)
+                    if (scanIndex >= minScanIndexWithoutScanTimes && msDataSpectrum.Level is >= byte.MinValue and <= byte.MaxValue)
                     {
-                        msLevels[spectrumIndex] = (byte)msDataSpectrum.Level;
+                        msLevels[scanIndex] = (byte)msDataSpectrum.Level;
                     }
 
                     if (int.TryParse(msDataSpectrum.Id, out var actualScanNumber))
@@ -547,7 +547,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError(string.Format("Error calling ComputeNOMMetricsForSingleScan for spectrum index {0} (scan {1})", spectrumIndex, scanNumber), ex);
+                    LogError(string.Format("Error calling ComputeNOMMetricsForSingleScan for spectrum index {0} (scan {1})", scanIndex, scanNumber), ex);
                     success = false;
                 }
 
@@ -556,7 +556,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
                 LogDebug(
                     "Reading spectra, loaded {0:N0} / {1:N0} spectra",
-                    scanNumber, spectrumCount);
+                    scanNumber, scanCount);
 
                 lastStatusProgressTime = DateTime.UtcNow;
             }
