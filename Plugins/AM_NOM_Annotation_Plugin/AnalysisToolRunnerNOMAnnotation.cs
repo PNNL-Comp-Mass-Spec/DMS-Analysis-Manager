@@ -280,7 +280,6 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
                 mProgress = PROGRESS_PCT_ANNOTATING_NOM_FEATURES;
 
-                var datasetsProcessed = 0;
                 var success = true;
 
                 datasetsByID = dataPackageInfo.Datasets;
@@ -349,9 +348,6 @@ namespace AnalysisManagerNOMAnnotationPlugin
                             success = false;
                             break;
                     }
-
-                    datasetsProcessed++;
-                    mProgress = ComputeIncrementalProgress(PROGRESS_PCT_ANNOTATING_NOM_FEATURES, PROGRESS_PCT_FINISHED_ANNOTATION, datasetsProcessed, datasetsByID.Count);
                 }
 
                 if (!success)
@@ -550,6 +546,8 @@ namespace AnalysisManagerNOMAnnotationPlugin
                     LogError(string.Format("Error calling ComputeNOMMetricsForSingleScan for spectrum index {0} (scan {1})", scanIndex, scanNumber), ex);
                     success = false;
                 }
+
+                mProgress = ComputeIncrementalProgress(PROGRESS_PCT_ANNOTATING_NOM_FEATURES, PROGRESS_PCT_FINISHED_ANNOTATION, scanNumber, scanCount);
 
                 if (!(DateTime.UtcNow.Subtract(lastStatusProgressTime).TotalMinutes >= 5))
                     continue;
