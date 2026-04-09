@@ -21,9 +21,14 @@ namespace AnalysisManagerNOMAnnotationPlugin
     public class AnalysisResourcesNOMAnnotation : AnalysisResources
     {
         /// <summary>
+        /// Job parameter used to track the formula table file defined in the parameter file
+        /// </summary>
+        public const string JOB_PARAM_FORMULA_TABLE_FILE = "NOMFormulaTableFile";
+
+        /// <summary>
         /// Job parameter used to track the reference mass file defined in the parameter file
         /// </summary>
-        public const string JOB_PARAM_REFERENCE_MASS_FILE = "ReferenceMassFile";
+        public const string JOB_PARAM_REFERENCE_MASS_FILE = "NOMReferenceMassFile";
 
         /// <summary>
         /// Retrieves files necessary for annotating natural organic matter features
@@ -75,7 +80,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
                     AnalysisToolRunnerNOMAnnotation.PROGRESS_PCT_INITIALIZING,
                     false,
                     out var dataPackageInfo,
-                    out var dataPackageDatasets);
+                    out _);
 
                 if (datasetCopyResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -125,19 +130,35 @@ namespace AnalysisManagerNOMAnnotationPlugin
                     return paramFileReader.ParamFileNotFound ? CloseOutType.CLOSEOUT_NO_PARAM_FILE : CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var formulaTableFileName = string.Empty;
                 var referenceMassFileName = string.Empty;
 
                 foreach (var entry in paramFileEntries)
                 {
+                    if (entry.Key.Equals("FormulaTableFile", StringComparison.OrdinalIgnoreCase))
+                    {
+                        formulaTableFileName = entry.Value.Trim();
+                    }
+
                     if (entry.Key.Equals("ReferenceMassFile", StringComparison.OrdinalIgnoreCase))
                     {
                         referenceMassFileName = entry.Value.Trim();
                     }
                 }
 
+                if (string.IsNullOrWhiteSpace(formulaTableFileName))
+                {
+                    LogMessage("Parameter file {0} does not have a formula table file defined; annotation metrics will not be computed", paramFile.Name);
+                }
+
                 if (string.IsNullOrWhiteSpace(referenceMassFileName))
                 {
-                    LogMessage("Parameter file {0} does not have a reference mass file defined; will only compute NOM metrics", paramFile.Name);
+                    LogMessage("Parameter file {0} does not have a reference mass file defined; calibration metrics will not be computed", paramFile.Name);
+                }
+
+                if (string.IsNullOrWhiteSpace(formulaTableFileName) && string.IsNullOrWhiteSpace(referenceMassFileName))
+                {
+                    // Do not need to copy any files locally
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
@@ -145,27 +166,42 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
                 if (!refMassFilesDirectory.Exists)
                 {
-                    LogError("Calibration files directory not found: " + refMassFilesDirectory.FullName);
+                    LogError("Reference mass files directory not found: " + refMassFilesDirectory.FullName);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                var referenceMassFile = new FileInfo(Path.Combine(refMassFilesDirectory.FullName, referenceMassFileName));
+                CloseOutType formulaTableFileResult;
 
-                if (!referenceMassFile.Exists)
+                if (!string.IsNullOrWhiteSpace(formulaTableFileName))
                 {
-                    LogError("Reference mass file not found: " + referenceMassFile.FullName);
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    formulaTableFileResult = CopyNOMFileToWorkDir(refMassFilesDirectory, formulaTableFileName, "Formula table file", JOB_PARAM_FORMULA_TABLE_FILE);
+                }
+                else
+                {
+                    formulaTableFileResult = CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                var localRefMassFilePath = Path.Combine(mWorkDir, referenceMassFile.Name);
-                referenceMassFile.CopyTo(localRefMassFilePath, true);
+                CloseOutType referenceMassFileResult;
 
-                mJobParams.AddResultFileToSkip(referenceMassFile.Name);
+                if (!string.IsNullOrWhiteSpace(referenceMassFileName))
+                {
+                    referenceMassFileResult = CopyNOMFileToWorkDir(refMassFilesDirectory, referenceMassFileName, "Reference mass file", JOB_PARAM_REFERENCE_MASS_FILE);
+                }
+                else
+                {
+                    referenceMassFileResult = CloseOutType.CLOSEOUT_SUCCESS;
+                }
 
-                mJobParams.AddAdditionalParameter(
-                    AnalysisJob.STEP_PARAMETERS_SECTION,
-                    JOB_PARAM_REFERENCE_MASS_FILE,
-                    referenceMassFile.Name);
+                if (formulaTableFileResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return formulaTableFileResult;
+                }
+
+                // ReSharper disable once ConvertIfStatementToReturnStatement
+                if (referenceMassFileResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return referenceMassFileResult;
+                }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -175,6 +211,29 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 LogErrorNoMessageUpdate(mMessage + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private CloseOutType CopyNOMFileToWorkDir(FileSystemInfo refMassFilesDirectory, string sourceFileName, string fileDescription, string fileNameJobParameter)
+        {
+            var remoteFile = new FileInfo(Path.Combine(refMassFilesDirectory.FullName, sourceFileName));
+
+            if (!remoteFile.Exists)
+            {
+                LogError("{0} not found: {1}", fileDescription, remoteFile.FullName);
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            var localFilePath = Path.Combine(mWorkDir, remoteFile.Name);
+            remoteFile.CopyTo(localFilePath, true);
+
+            mJobParams.AddResultFileToSkip(remoteFile.Name);
+
+            mJobParams.AddAdditionalParameter(
+                AnalysisJob.STEP_PARAMETERS_SECTION,
+                fileNameJobParameter,
+                remoteFile.Name);
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
     }
 }

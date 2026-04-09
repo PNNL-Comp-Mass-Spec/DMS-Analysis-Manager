@@ -229,10 +229,35 @@ namespace AnalysisManagerNOMAnnotationPlugin
 
                 LogMessage("Annotating natural organic matter features");
 
+                // The formula table file is used for computing annotation metrics
+                var formulaTableFileName = mJobParams.GetJobParameter(
+                    AnalysisJob.STEP_PARAMETERS_SECTION,
+                    AnalysisResourcesNOMAnnotation.JOB_PARAM_FORMULA_TABLE_FILE,
+                    string.Empty);
+
+                // The reference mass file is used for computing calibration metrics
                 var referenceMassFileName = mJobParams.GetJobParameter(
                     AnalysisJob.STEP_PARAMETERS_SECTION,
                     AnalysisResourcesNOMAnnotation.JOB_PARAM_REFERENCE_MASS_FILE,
                     string.Empty);
+
+                string formulaTableFilePath;
+
+                if (string.IsNullOrWhiteSpace(formulaTableFileName))
+                {
+                    formulaTableFilePath = string.Empty;
+                }
+                else
+                {
+                    formulaTableFilePath = Path.Combine(mWorkDir, formulaTableFileName);
+
+                    if (!File.Exists(formulaTableFilePath))
+                    {
+                        LogError("Formula table file not found: " + formulaTableFileName, "Formula table file not found: " + formulaTableFilePath);
+                        datasetsByID = new Dictionary<int, string>();
+                        return false;
+                    }
+                }
 
                 string referenceMassFilePath;
 
@@ -324,13 +349,15 @@ namespace AnalysisManagerNOMAnnotationPlugin
                             {
                                 successCurrentDataset = ComputeNOMMetricsForOneDataset(
                                     datasetName, analysisBafFile, datasetResultFiles,
-                                    pythonExe, pythonScriptFile, referenceMassFilePath);
+                                    pythonExe, pythonScriptFile,
+                                    referenceMassFilePath, formulaTableFilePath);
                             }
                             else if (analysisTdfFile.Exists)
                             {
                                 successCurrentDataset = ComputeNOMMetricsForOneDataset(
                                     datasetName, analysisTdfFile, datasetResultFiles,
-                                    pythonExe, pythonScriptFile, referenceMassFilePath);
+                                    pythonExe, pythonScriptFile,
+                                    referenceMassFilePath, formulaTableFilePath);
                             }
                             else
                             {
@@ -380,6 +407,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
         /// <param name="pythonExe">Python .exe</param>
         /// <param name="pythonScriptFile">Python script fil</param>
         /// <param name="referenceMassFilePath">Reference mass file path</param>
+        /// <param name="formulaTableFilePath">Formula table file path</param>
         /// <returns>True if successful, false if an error</returns>
         private bool ComputeNOMMetricsForOneDataset(
             string datasetName,
@@ -387,7 +415,8 @@ namespace AnalysisManagerNOMAnnotationPlugin
             ICollection<FileInfo> datasetResultFiles,
             FileSystemInfo pythonExe,
             FileInfo pythonScriptFile,
-            string referenceMassFilePath)
+            string referenceMassFilePath,
+            string formulaTableFilePath)
         {
             try
             {
@@ -410,7 +439,10 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 }
                 else
                 {
-                    success = ComputeNOMMetricsForOneDataset(datasetName, msDataFileReader, datasetResultFiles, pythonExe, pythonScriptFile, referenceMassFilePath);
+                    success = ComputeNOMMetricsForOneDataset(
+                        datasetName, msDataFileReader, datasetResultFiles,
+                        pythonExe, pythonScriptFile,
+                        referenceMassFilePath, formulaTableFilePath);
                 }
 
                 msDataFileReader.Dispose();
@@ -431,7 +463,8 @@ namespace AnalysisManagerNOMAnnotationPlugin
             ICollection<FileInfo> datasetResultFiles,
             FileSystemInfo pythonExe,
             FileInfo pythonScriptFile,
-            string referenceMassFilePath)
+            string referenceMassFilePath,
+            string formulaTableFilePath)
         {
             Console.WriteLine();
             LogDebug("Obtaining scan times and MSLevels (this could take several minutes)");
@@ -535,7 +568,10 @@ namespace AnalysisManagerNOMAnnotationPlugin
                         }
                     }
 
-                    var successCurrent = ComputeNOMMetricsForSingleScan(massSpectrumFile, datasetResultFiles, pythonExe, pythonScriptFile, referenceMassFilePath);
+                    var successCurrent = ComputeNOMMetricsForSingleScan(
+                        massSpectrumFile, datasetResultFiles,
+                        pythonExe, pythonScriptFile,
+                        referenceMassFilePath, formulaTableFilePath);
 
                     if (!successCurrent)
                         success = false;
@@ -567,7 +603,8 @@ namespace AnalysisManagerNOMAnnotationPlugin
             ICollection<FileInfo> resultFiles,
             FileSystemInfo pythonExe,
             FileInfo pythonScriptFile,
-            string referenceMassFilePath
+            string referenceMassFilePath,
+            string formulaTableFilePath
             )
         {
             // Set up and execute a program runner to compute the NOM metrics
@@ -579,14 +616,6 @@ namespace AnalysisManagerNOMAnnotationPlugin
             }
 
             if (massSpectrumFile.DirectoryName is null)
-            {
-                LogError("Unable to determine the parent directory of the mass spectrum file: " + massSpectrumFile.FullName);
-                return false;
-            }
-
-            var formulaTableJsonFile = new FileInfo(Path.Combine(pythonScriptFile.DirectoryName, "master_formula_table.json"));
-
-            if (!formulaTableJsonFile.Exists)
             {
                 LogError("Unable to determine the parent directory of the mass spectrum file: " + massSpectrumFile.FullName);
                 return false;
@@ -608,7 +637,11 @@ namespace AnalysisManagerNOMAnnotationPlugin
                 arguments.AppendFormat(" --ref-masslist {0}", referenceMassFilePath);
             }
 
-            arguments.AppendFormat(" --formula-table {0}", formulaTableJsonFile.FullName);
+            if (!string.IsNullOrWhiteSpace(formulaTableFilePath))
+            {
+                arguments.AppendFormat(" --formula-table {0}", formulaTableFilePath);
+            }
+
             // arguments.Append(" --ppm-tolerance 1.0");
 
             // Create a batch file to run the command
