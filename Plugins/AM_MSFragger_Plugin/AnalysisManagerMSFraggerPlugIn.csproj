@@ -57,12 +57,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.9.50</Version>
+      <Version>3.10.85</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.9.20</Version>
+      <Version>2.9.25</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>3.1.0</Version>
