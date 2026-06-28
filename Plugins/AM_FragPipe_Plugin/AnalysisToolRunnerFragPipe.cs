@@ -36,7 +36,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         public const string ANNOTATION_FILE_SUFFIX = "_annotation.txt";
 
-        private const string FRAGPIPE_INSTANCE_DIRECTORY = "FragPipe_v23.1";
+        private const string FRAGPIPE_INSTANCE_DIRECTORY = "FragPipe_v24.0";
 
         private const string FRAGPIPE_BATCH_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\bin\fragpipe.bat";
 
@@ -86,7 +86,7 @@ namespace AnalysisManagerFragPipePlugIn
         private string mFragPipeVersion;
 
         /// <summary>
-        /// Path to fragpipe.bat, e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.1\bin\fragpipe.bat
+        /// Path to fragpipe.bat, e.g. C:\DMS_Programs\FragPipe\FragPipe_v24.0\bin\fragpipe.bat
         /// </summary>
         private string mFragPipeProgLoc;
 
@@ -144,7 +144,7 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Determine the path to the FragPipe batch file, e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.1\bin\fragpipe.bat
+                // Determine the path to the FragPipe batch file, e.g. C:\DMS_Programs\FragPipe\FragPipe_v24.0\bin\fragpipe.bat
 
                 mFragPipeProgLoc = DetermineProgramLocation("FragPipeProgLoc", FRAGPIPE_BATCH_FILE_PATH);
 
@@ -531,7 +531,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Determine the path to the FragPipe tools directory
         /// </summary>
-        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY), e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.1\tools</param>
+        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY), e.g. C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools</param>
         /// <param name="fragPipeProgLoc">Output: path to the FragPipe directory below DMS_Programs, e.g. C:\DMS_Programs\FragPipe</param>
         /// <returns>True if the directory was found, false if missing or an error</returns>
         private bool DetermineFragPipeToolLocations(out DirectoryInfo toolsDirectory, out string fragPipeProgLoc)
@@ -601,7 +601,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 // Verify that Python.exe exists
                 // Prior to May 2025, used Python3ProgLoc, which is "C:\Python3"
-                // FragPipe v23 ships with Python 3.11.11, which is tracked by manager parameter FragPipePython3ProgLoc, with value C:\DMS_Programs\FragPipe\FragPipe_v23.1\python
+                // FragPipe v24 ships with Python 3.11.11, which is tracked by manager parameter FragPipePython3ProgLoc, with value C:\DMS_Programs\FragPipe\FragPipe_v24.0\python
 
                 var pythonExePath = GetPythonProgLoc(mMgrParams, out var errorMessage, "FragPipePython3ProgLoc");
 
@@ -1164,43 +1164,43 @@ namespace AnalysisManagerFragPipePlugIn
             //
             // 50 commands to execute:
             // CheckCentroid
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-23.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.35.1.jar org.nesvilab.fragpipe.util.CheckCentroid D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 23
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Xmx60G -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\lib\fragpipe-23.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\batmass-io-1.35.1.jar org.nesvilab.fragpipe.util.CheckCentroid D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 23
             // WorkspaceCleanInit [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe workspace --clean --nocheck
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe workspace --clean --nocheck
             // ...
             // MSFragger [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx60G C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\MSFragger-4.3.jar D:\DMS_WorkDir1\fragger.params D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx60G C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\MSFragger-4.3.jar D:\DMS_WorkDir1\fragger.params D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
             // Percolator [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
             // ...
             // Percolator: Convert to pepxml [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pin NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19 NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv interact-NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19 DDA 0.5 D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pin NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19 NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv interact-NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19 DDA 0.5 D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
             // Percolator delete temp
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-23.0.jar org.nesvilab.utils.FileDelete D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\lib\fragpipe-23.0.jar org.nesvilab.utils.FileDelete D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv
             // ...
             // PTMProphet [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949,n:42.010567,STY:79.96633 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949,n:42.010567,STY:79.96633 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
             // ...
             // ProteinProphet [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined D:\DMS_WorkDir1\filelist_proteinprophet.txt
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined D:\DMS_WorkDir1\filelist_proteinprophet.txt
             // PhilosopherDbAnnotate [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta --prefix XXX_
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta --prefix XXX_
             // PhilosopherFilter [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --razor
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --razor
             // PhilosopherFilter [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P02_P --dbbin D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --probin D:\DMS_WorkDir1\NYBB_30_P01_P --razor
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P02_P --dbbin D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --probin D:\DMS_WorkDir1\NYBB_30_P01_P --razor
             // PhilosopherReport [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe report
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe report
             // PhilosopherReport [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe report
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe report
             // WorkspaceClean [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe workspace --clean --nocheck
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe workspace --clean --nocheck
             // ...
             // IonQuant [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.11.11.jar ionquant.IonQuant --threads 23 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\IonQuant-1.11.11.jar ionquant.IonQuant --threads 23 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
             // IonQuant [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.11.11.jar ionquant.IonQuant --threads 23 --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-16 --ionmobility 0 --site-reports 0 --msstats 0 --annotation D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv=D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_annotation.txt --annotation D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv=D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_annotation.txt --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\IonQuant-1.11.11.jar ionquant.IonQuant --threads 23 --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-16 --ionmobility 0 --site-reports 0 --msstats 0 --annotation D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv=D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_annotation.txt --annotation D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv=D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_annotation.txt --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
             // TmtIntegrator [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -jar C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\TMT-Integrator-6.1.1.jar D:\DMS_WorkDir1\tmt-integrator-conf.yml D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Xmx60G -jar C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\TMT-Integrator-6.1.1.jar D:\DMS_WorkDir1\tmt-integrator-conf.yml D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv
             // ~~~~~~~~~~~~~~~~~~~~~~
             //
             // Execution order:
@@ -1266,18 +1266,18 @@ namespace AnalysisManagerFragPipePlugIn
             // ~~~~~~~~~~~~~~~~~~~~~~
             //
             // ~~~~~~~~~ fragpipe.config ~~~~~~~~~
-            // # FragPipe v23.0ui state cache
+            // # FragPipe v24.0ui state cache
             //
             // ...
             //
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // CheckCentroid
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-23.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.35.1.jar org.nesvilab.fragpipe.util.CheckCentroid D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 23
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Xmx60G -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\lib\fragpipe-23.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\batmass-io-1.35.1.jar org.nesvilab.fragpipe.util.CheckCentroid D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 23
             // Done in 2.8 s.
             // Process 'CheckCentroid' finished, exit code: 0
             // ...
             // MSFragger [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx60G C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\MSFragger-4.3.jar D:\DMS_WorkDir1\fragger.params D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx60G C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\MSFragger-4.3.jar D:\DMS_WorkDir1\fragger.params D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
             // MSFragger version MSFragger-4.2
             // Batmass-IO version 1.35.1
             // timsdata library version timsdata-2-21-0-4
@@ -1426,7 +1426,7 @@ namespace AnalysisManagerFragPipePlugIn
             // *******************************TOTAL TIME 9.200 MIN********************************
             // Process 'MSFragger' finished, exit code: 0
             // Percolator [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\percolator_3_7_1\windows\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 23 --results-psms NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv --decoy-results-psms NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pin
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\percolator_3_7_1\windows\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 23 --results-psms NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv --decoy-results-psms NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pin
             // Percolator version 3.07.1, Build Date Jun 20 2024 13:21:08
             // ...
             // Calculating q values.
@@ -1436,10 +1436,10 @@ namespace AnalysisManagerFragPipePlugIn
             // Process 'Percolator' finished, exit code: 0
             // ...
             // Percolator: Convert to pepxml [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pin NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19 NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19 DDA 0.5 D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pin NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19 NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19 DDA 0.5 D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML
             // ...
             // PTMProphet [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949,n:42.010567,STY:79.96633 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949,n:42.010567,STY:79.96633 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
             // PTMProphet [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
             // ...
             // [INFO:] Writing file interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml ...
@@ -1448,33 +1448,33 @@ namespace AnalysisManagerFragPipePlugIn
             // [INFO:] Using statically set 10 PPM tolerance ...
             // ...
             // ProteinProphet [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined D:\DMS_WorkDir1\filelist_proteinprophet.txt
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined D:\DMS_WorkDir1\filelist_proteinprophet.txt
             // time="20:54:27" level=info msg="Executing ProteinProphet  v5.1.1"
             // ProteinProphet (C++) by Insilicos LLC and LabKey Software, after the original Perl by A. Keller (TPP v6.0.0-rc15 Noctilucent, Build 202105101442-exported (Windows_NT-x86_64))
             //  (no FPKM) (no groups) (using degen pep info)
             // ...
             // Process 'ProteinProphet' finished, exit code: 0
             // PhilosopherDbAnnotate [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta --prefix XXX_
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta --prefix XXX_
             // time="20:54:37" level=info msg="Executing Database  v5.1.1"
             // time="20:54:37" level=info msg="Annotating the database"
             // time="20:54:38" level=info msg=Done
             // Process 'PhilosopherDbAnnotate' finished, exit code: 0
             // PhilosopherFilter [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --razor
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --razor
             // ...
             // Process 'PhilosopherFilter' finished, exit code: 0
             // PhilosopherReport [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
             // ...
             // IonQuant [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.3\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.11.11.jar ionquant.IonQuant --threads 23 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\MSFragger-4.3\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\IonQuant-1.11.11.jar ionquant.IonQuant --threads 23 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
             // IonQuant version IonQuant-1.11.11
             // Batmass-IO version 1.35.1
             // timsdata library version timsdata-2-21-0-4
             // ...
             // Process 'IonQuant' finished, exit code: 0
             // TmtIntegrator [Work dir: D:\DMS_WorkDir1]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -jar C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\TMT-Integrator-6.1.1.jar D:\DMS_WorkDir1\tmt-integrator-conf.yml D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv
+            // C:\DMS_Programs\FragPipe\FragPipe_v24.0\jre\bin\java.exe -Xmx60G -jar C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\TMT-Integrator-6.1.1.jar D:\DMS_WorkDir1\tmt-integrator-conf.yml D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv
             // TMT Integrator 6.1.1
             // ...
             // Process 'TmtIntegrator' finished, exit code: 0
@@ -2188,7 +2188,7 @@ namespace AnalysisManagerFragPipePlugIn
             // ReSharper disable CommentTypo
 
             // Example command line:
-            // fragpipe.bat --headless --ram 0 --threads 15 --workflow C:\DMS_WorkDir\FragPipe_TMT16-phospho_2024-09-09.workflow --manifest C:\DMS_WorkDir\datasets.fp-manifest --workdir C:\DMS_WorkDir --config-tools-folder C:\DMS_Programs\FragPipe\FragPipe_v23.1\tools --config-diann C:\DMS_Programs\FragPipe\FragPipe_v23.1\tools\diann\1.8.2_beta_8\win\DiaNN.exe --config-python C:\Python3\python.exe
+            // fragpipe.bat --headless --ram 0 --threads 15 --workflow C:\DMS_WorkDir\FragPipe_TMT16-phospho_2024-09-09.workflow --manifest C:\DMS_WorkDir\datasets.fp-manifest --workdir C:\DMS_WorkDir --config-tools-folder C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools --config-diann C:\DMS_Programs\FragPipe\FragPipe_v24.0\tools\diann\1.8.2_beta_8\win\DiaNN.exe --config-python C:\Python3\python.exe
 
             // ReSharper restore CommentTypo
 

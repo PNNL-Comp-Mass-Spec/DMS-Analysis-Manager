@@ -1977,7 +1977,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // paramName should be either Python3ProgLoc or FragPipePython3ProgLoc
             //   Python3ProgLoc: "C:\Python3"
-            //   FragPipePython3ProgLoc: "C:\DMS_Programs\FragPipe\FragPipe_v23.1\python"
+            //   FragPipePython3ProgLoc: "C:\DMS_Programs\FragPipe\FragPipe_v24.0\python"
 
             var pythonProgLoc = mgrParams.GetParam(paramName);
 
