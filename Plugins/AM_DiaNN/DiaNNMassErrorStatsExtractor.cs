@@ -185,7 +185,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
-                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                // If querying a PostgreSQL DB, dbTools will auto-change "@return" to "_returnCode"
                 var returnParam = dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
 
                 dbTools.AddTypedParameter(sqlCmd, "@datasetID", SqlType.Int, value: datasetID);

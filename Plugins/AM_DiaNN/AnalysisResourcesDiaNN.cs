@@ -18,7 +18,7 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </summary>
     public class AnalysisResourcesDiaNN : AnalysisResources
     {
-        // Ignore Spelling: DIA, silico
+        // Ignore Spelling: DIA, dms, silico, svc-dms
 
         internal const string DIA_NN_SPEC_LIB_STEP_TOOL = "DiaNN_SpecLib";
 

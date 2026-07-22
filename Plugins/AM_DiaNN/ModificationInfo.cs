@@ -11,7 +11,7 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </remarks>
     public class ModificationInfo
     {
-        // Ignore Spelling: DIA
+        // Ignore Spelling: carbamidomethyl, Cys, DIA, iodoacetamide, ubiquitinylation
 
         /// <summary>
         /// Affected residues or peptide/protein position
@@ -75,7 +75,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
         /// <summary>
         /// When true, append an argument of the form "--monitor-mod UniMod:121" to the argument list sent to DiaNN.exe
-        /// Enables PTM scoring & site localisation for the given mode
+        /// Enables PTM scoring & site localization for the given mode
         /// </summary>
         /// <remarks>
         /// <para>Present in DIA-NN 1.8 but removed in DIA-NN 1.9</para>

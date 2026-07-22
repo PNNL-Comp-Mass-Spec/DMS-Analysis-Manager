@@ -28,8 +28,10 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public class AnalysisToolRunnerBase : AnalysisMgrBase, IToolRunner
     {
-        // Ignore Spelling: acqu, app, baf, calc, cmd, Cnfg, Cpu, crc, Dta, DMS, fid, gzip, gzipped, hashcheck, java, loc, msconvert, na
-        // Ignore Spelling: Prog, proteinseqs, protoapps, PVM, Quant, readw, sequest, str, subkey, subkeys, tdf, usr, wildcards, Xfer
+        // Ignore Spelling: acqu, app, baf, calc, cmd, Cnfg, Cpu, crc, Dta, dms, fid
+        // Ignore Spelling: gzip, gzipped, hashcheck, holdoff, java, loc, msconvert, na
+        // Ignore Spelling: Prog, proteinseqs, protoapps, PVM, Quant, readw, recurse, recursing
+        // Ignore Spelling: sequest, str, svc-dms, subkey, subkeys, subtask, tdf, usr, wildcards, Xfer
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
         /// <summary>

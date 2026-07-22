@@ -24,7 +24,7 @@ namespace AnalysisManagerFragPipePlugIn
     /// </summary>
     public class AnalysisResourcesFragPipe : AnalysisResources
     {
-        // Ignore Spelling: centroided, FASTA, Frag, numpy, resourcer
+        // Ignore Spelling: centroided, FASTA, Frag, numpy, protoapps, resourcer, tryptic
 
         internal const string DATABASE_SPLIT_COUNT_SECTION = "FragPipe";
         internal const string DATABASE_SPLIT_COUNT_PARAM = "DatabaseSplitCount";

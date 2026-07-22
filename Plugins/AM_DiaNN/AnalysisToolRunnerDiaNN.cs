@@ -30,8 +30,9 @@ namespace AnalysisManagerDiaNNPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: acc, analyse, carbamidomethylation, Cysteine, dia, evalue, fasta, Initialising, isoforms, len
-        // Ignore Spelling: optimise, optimising, qvalue, pre, prot, proteotypic, proteotypicity, reanalyse, Regex, silico, Xeon
+        // Ignore Spelling: acc, analyse, analysing, carbamidomethylation, Cysteine, dia, dms, evalue, fasta, Initialising, isoforms, len
+        // Ignore Spelling: optimise, optimising, peptidoform, peptidoforms, proteoforms, qvalue
+        // Ignore Spelling: pre, prot, proteotypic, proteotypicity, reanalyse, Regex, silico, svc-dms, Xeon, XIC
 
         // ReSharper restore CommentTypo
 

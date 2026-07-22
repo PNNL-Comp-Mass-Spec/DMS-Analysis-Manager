@@ -32,7 +32,7 @@ namespace AnalysisManagerFragPipePlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerFragPipe : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: dia, frag
+        // Ignore Spelling: Adoptium, dia, diann, dms, frag, fragpipe, jre, numpy, tmt, svc-dms
 
         public const string ANNOTATION_FILE_SUFFIX = "_annotation.txt";
 

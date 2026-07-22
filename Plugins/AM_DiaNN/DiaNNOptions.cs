@@ -11,7 +11,7 @@ namespace AnalysisManagerDiaNNPlugIn
     // ReSharper disable CommentTypo
 
     // Ignore Spelling: alkylation, carbamidomethyl, Chymotrypsin, cys, DIA, iodoacetamide, isoform, isotopologues, Glu, Lys
-    // Ignore Spelling: peptidoforms, proline, prot, proteomes, proteotypicity, silico
+    // Ignore Spelling: peptidoforms, proline, prot, peptidoform, proteoforms, proteomes, proteotypicity, silico
 
     // ReSharper enable CommentTypo
 
