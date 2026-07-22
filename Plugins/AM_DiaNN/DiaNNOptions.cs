@@ -413,6 +413,14 @@ namespace AnalysisManagerDiaNNPlugIn
         public CrossRunNormalizationModes CrossRunNormalization { get; set; } = CrossRunNormalizationModes.RTDependent;
 
         /// <summary>
+        /// Report Decoys
+        /// </summary>
+        /// <remarks>
+        /// When true, include decoy PSMs in the main .parquet report
+        /// </remarks>
+        public bool ReportDecoys { get; set; } = false;
+
+        /// <summary>
         /// Create a PDF report
         /// </summary>
         public bool GeneratePDFReport { get; set; } = true;
@@ -830,6 +838,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 CrossRunNormalization = (CrossRunNormalizationModes)crossRunNormalizationMode;
+
+                ReportDecoys = GetParameterValueOrDefault(paramFileSettings, "ReportDecoys", ReportDecoys);
 
                 GeneratePDFReport = GetParameterValueOrDefault(paramFileSettings, "GeneratePDFReport", GeneratePDFReport);
 

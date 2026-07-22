@@ -2044,6 +2044,9 @@ namespace AnalysisManagerDiaNNPlugIn
                         break;
                 }
 
+                if (options.ReportDecoys)
+                    arguments.AppendFormat(" --report-decoys");
+
                 AppendAdditionalArguments(options, arguments);
             }
 
