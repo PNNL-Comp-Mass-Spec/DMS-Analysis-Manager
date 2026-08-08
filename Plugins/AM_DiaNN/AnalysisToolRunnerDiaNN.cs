@@ -350,6 +350,12 @@ namespace AnalysisManagerDiaNNPlugIn
             {
                 arguments.Append(" --smart-profiling");
             }
+
+            // Set the empirical library generation mode to IDs, RT and IM profiling:
+            // " --rt-profiling"
+
+            // Enable using empirical spectra for empirical library generation; documentation says this is typically paired with --smart-profiling
+            // " --full-profiling"
         }
 
         private void AppendModificationArguments(DiaNNOptions options, StringBuilder arguments)
