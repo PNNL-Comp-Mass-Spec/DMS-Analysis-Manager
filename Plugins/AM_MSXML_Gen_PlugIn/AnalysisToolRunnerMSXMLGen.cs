@@ -21,7 +21,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// </summary>
     public class AnalysisToolRunnerMSXMLGen : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: gzip, mgf, msconvert, readw, Reindex
+        // Ignore Spelling: gzip, mgf, msconvert, readw, Reindex, Thermo
 
         private const int PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
@@ -89,7 +89,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         }
 
         /// <summary>
-        /// Generate the mzXML or mzML file
+        /// Generate the mzXML or mzML file (if a single dataset), or a set of mzML files if a data package
         /// </summary>
         /// <param name="dataPackageInfo">Output: tracks either the dataset for this job or the datasets in the data package associated with this job</param>
         /// <param name="processedDatasetIDs">Output: list of dataset IDs that were actually processed</param>

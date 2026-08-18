@@ -63,6 +63,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected abstract string ProgramName { get; }
 
+        /// <summary>
+        /// Source instrument file path
+        /// </summary>
+        /// <remarks>Method CreateMSXMLFile updates this property</remarks>
         public string SourceFilePath { get; private set; }
 
         /// <summary>
@@ -189,7 +193,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            // Verify that program file exists
+            // Verify that the program file exists
             if (!File.Exists(mProgramPath))
             {
                 mErrorMessage = "Cannot find MSXmlGenerator exe program file: " + mProgramPath;
