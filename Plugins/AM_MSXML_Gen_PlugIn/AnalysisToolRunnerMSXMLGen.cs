@@ -175,6 +175,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var processedDatasets = new SortedSet<string>();
 
+                // If processing three or more datasets, delete the source file after processing each dataset to minimize the risk of running out of drive free space
+                var deleteInstrumentFileOnSuccess = dataPackageInfo.Datasets.Count > 2;
+
                 // Process each dataset
                 foreach (var dataset in dataPackageInfo.Datasets)
                 {
@@ -209,7 +212,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     var resultCode = CreateMSXMLFileForDataset(
                         datasetName, rawDataTypeName, msXmlGenerator,
                         centroidMS1, centroidMS2,
-                        customMSConvertArguments, centroidPeakCountToRetain);
+                        customMSConvertArguments, centroidPeakCountToRetain,
+                        deleteInstrumentFileOnSuccess);
 
                     processedDatasetIDs.Add(datasetId);
                     processedDatasets.Add(datasetName);
@@ -231,7 +235,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
         private CloseOutType CreateMSXMLFileForDataset(
             string datasetName, string rawDataTypeName, string msXmlGenerator,
             bool centroidMS1, bool centroidMS2,
-            string customMSConvertArguments, int centroidPeakCountToRetain)
+            string customMSConvertArguments, int centroidPeakCountToRetain,
+            bool deleteInstrumentFileOnSuccess)
         {
             try
             {
@@ -312,6 +317,17 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     LogError(msXmlGen.ErrorMessage);
                 }
 
+                if (deleteInstrumentFileOnSuccess)
+                {
+                    try
+                    {
+                        base.DeleteFileWithRetries(msXmlGen.SourceFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError(string.Format("Exception trying to delete file {0} using DeleteFileWithRetries", msXmlGen.SourceFilePath), ex);
+                    }
+                }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
@@ -403,7 +419,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <param name="datasetId"></param>
         /// <param name="resultFileExtension"></param>
         /// <returns>True if successful, false if an error</returns>
-        private bool PostProcessMSXmlFile(DataPackageInfo dataPackageInfo, int datasetId,string resultFileExtension)
+        private bool PostProcessMSXmlFile(DataPackageInfo dataPackageInfo, int datasetId, string resultFileExtension)
         {
             try
             {
