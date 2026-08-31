@@ -355,6 +355,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <remarks>
         /// DIA-NN documentation says that this mode is only recommended for benchmarking protein ID numbers, and should thus generally not be used
         /// </remarks>
+        [Obsolete("Removed in DIA-NN 2.1.6")]
         public bool HeuristicProteinInference { get; set; } = true;
 
         /// <summary>
@@ -790,7 +791,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 CreateQuantitiesMatrices = GetParameterValueOrDefault(paramFileSettings, "CreateQuantitiesMatrices", CreateQuantitiesMatrices);
 
-                HeuristicProteinInference = GetParameterValueOrDefault(paramFileSettings, "HeuristicProteinInference", HeuristicProteinInference);
+                /*
+                 * Removed in DIA-NN 2.1.6
+                 *
+                    HeuristicProteinInference = GetParameterValueOrDefault(paramFileSettings, "HeuristicProteinInference", HeuristicProteinInference);
+                */
 
                 SmartProfilingLibraryGeneration = GetParameterValueOrDefault(paramFileSettings, "SmartProfilingLibraryGeneration", SmartProfilingLibraryGeneration);
 
@@ -944,7 +949,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
             */
 
-            return true;
+                return true;
         }
 
         /// <summary>

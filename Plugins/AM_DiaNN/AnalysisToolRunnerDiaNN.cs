@@ -341,10 +341,14 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.Append(" --reanalyse");
             }
 
-            if (options.HeuristicProteinInference)
-            {
-                arguments.Append(" --relaxed-prot-inf");
-            }
+            /*
+             * Removed in DIA-NN 2.1.6
+             *
+                if (options.HeuristicProteinInference)
+                {
+                    arguments.Append(" --relaxed-prot-inf");
+                }
+            */
 
             if (options.SmartProfilingLibraryGeneration)
             {
@@ -962,7 +966,7 @@ namespace AnalysisManagerDiaNNPlugIn
             // CPU: GenuineIntel Intel(R) Xeon(R) W-2245 CPU @ 3.90GHz
             // SIMD instructions: AVX AVX2 AVX512CD AVX512F FMA SSE4.1 SSE4.2
             // Logical CPU cores: 16
-            // C:\DMS_Programs\DIA-NN\DiaNN.exe --lib  --threads 8 --verbose 2 --predictor --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --fasta-search --min-fr-mz 200 --max-fr-mz 1800 --met-excision --cut K*,R* --missed-cleavages 2 --min-pep-len 7 --max-pep-len 30 --min-pr-mz 350 --max-pr-mz 1800 --min-pr-charge 2 --max-pr-charge 4 --unimod4 --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --relaxed-prot-inf --smart-profiling
+            // C:\DMS_Programs\DIA-NN\DiaNN.exe --lib  --threads 8 --verbose 2 --predictor --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --fasta-search --min-fr-mz 200 --max-fr-mz 1800 --met-excision --cut K*,R* --missed-cleavages 2 --min-pep-len 7 --max-pep-len 30 --min-pr-mz 350 --max-pr-mz 1800 --min-pr-charge 2 --max-pr-charge 4 --unimod4 --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --smart-profiling
 
             // Thread number set to 8
             // Deep learning will be used to generate a new in silico spectral library from peptides provided
@@ -1119,7 +1123,7 @@ namespace AnalysisManagerDiaNNPlugIn
             // CPU: GenuineIntel Intel(R) Xeon(R) W-2245 CPU @ 3.90GHz
             // SIMD instructions: AVX AVX2 AVX512CD AVX512F FMA SSE4.1 SSE4.2
             // Logical CPU cores: 16
-            // C:\DMS_Programs\DIA-NN\DiaNN.exe --f C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML  --lib lib.predicted.speclib --threads 8 --verbose 2 --out C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.tsv --qvalue 0.01 --matrices --temp C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2" --out-lib C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv --gen-spec-lib --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --met-excision --cut K*,R* --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --relaxed-prot-inf --smart-profiling
+            // C:\DMS_Programs\DIA-NN\DiaNN.exe --f C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML  --lib lib.predicted.speclib --threads 8 --verbose 2 --out C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.tsv --qvalue 0.01 --matrices --temp C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2" --out-lib C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv --gen-spec-lib --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --met-excision --cut K*,R* --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --smart-profiling
             //
             // Thread number set to 7
             // Output will be filtered at 0.01 FDR
@@ -1777,7 +1781,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 // --unimod4 --var-mods 3
                 // --var-mod UniMod:35,15.994915,M
                 // --var-mod UniMod:1,42.010565,*n --monitor-mod UniMod:1
-                // --reanalyse --relaxed-prot-inf --smart-profiling
+                // --reanalyse --smart-profiling
 
                 arguments.AppendFormat(" --lib {0}", "\"\"");
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
@@ -1845,7 +1849,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 // --monitor-mod UniMod:1
                 // --window 0
                 // --mass-acc 0 --mass-acc-ms1 0
-                // --reanalyse --relaxed-prot-inf
+                // --reanalyse
                 // --smart-profiling  --pg-level 2
 
                 // ReSharper restore CommentTypo
