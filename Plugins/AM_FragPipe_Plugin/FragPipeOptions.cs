@@ -13,7 +13,7 @@ namespace AnalysisManagerFragPipePlugIn
 {
     public class FragPipeOptions : EventNotifier
     {
-        // Ignore Spelling: Frag, ITRAQ, workflow
+        // Ignore Spelling: Acetylation, dia-nn, Frag, ITRAQ, Phosphorylated, plex, TMTIntegrator, tryptic, workflow
 
         private const string C_TERM_PEPTIDE = "Cterm_peptide";
         private const string N_TERM_PEPTIDE = "Nterm_peptide";
