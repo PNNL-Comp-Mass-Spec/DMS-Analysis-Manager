@@ -857,7 +857,7 @@ namespace AnalysisManagerFragPipePlugIn
                 AddParameterToValidate(parametersToValidate, "msfragger.allowed_missed_cleavage_1", 0, 5);
                 AddParameterToValidate(parametersToValidate, "msfragger.allowed_missed_cleavage_2", 0, 5);
                 AddParameterToValidate(booleanParametersToValidate, "msfragger.clip_nTerm_M");
-                AddParameterToValidate(parametersToValidate, "msfragger.max_variable_mods_per_peptide", 1, 10);
+                AddParameterToValidate(parametersToValidate, "msfragger.max_variable_mods_per_peptide", 0, 10);
                 AddParameterToValidate(parametersToValidate, "msfragger.max_variable_mods_combinations", 1000, 65534);
                 AddParameterToValidate(parametersToValidate, "msfragger.output_report_topN", 1, 10);
                 AddParameterToValidate(booleanParametersToValidate, "msfragger.report_alternative_proteins");
