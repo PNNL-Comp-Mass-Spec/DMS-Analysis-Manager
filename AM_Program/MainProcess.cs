@@ -1028,8 +1028,7 @@ namespace AnalysisManagerProg
 
                 if (mInsufficientFreeMemory)
                 {
-                    LogWarning("Pausing the manager for 60 minutes since not enough free system memory");
-                    mMgrParams.PauseManagerTaskRequests();
+                    PauseManagerIfLowMemory();
                 }
 
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -2320,6 +2319,17 @@ namespace AnalysisManagerProg
             return statusParsed;
         }
 
+        private void PauseManagerIfLowMemory()
+        {
+            var freeMemoryMB = Global.GetFreeMemoryMB();
+
+            if (freeMemoryMB < 10000)
+            {
+                LogWarning("Pausing the manager for 30 minutes since not enough free system memory ({0} MB of free memory)", freeMemoryMB);
+                mMgrParams.PauseManagerTaskRequests(30);
+            }
+        }
+
         private void PauseManagerForCooldown(int errorOrDeadlockCount)
         {
             var cooldownSeconds = 10 + 10 * errorOrDeadlockCount;
@@ -2582,8 +2592,7 @@ namespace AnalysisManagerProg
 
                     if (mInsufficientFreeMemory)
                     {
-                        LogWarning("Pausing the manager for 60 minutes since not enough free system memory");
-                        mMgrParams.PauseManagerTaskRequests();
+                        PauseManagerIfLowMemory();
                     }
                 }
 
