@@ -1864,6 +1864,7 @@ namespace AnalysisManagerFragPipePlugIn
                 // If the FragPipe workflow file has "msfragger.write_calibrated_mzml=true" or "msfragger.write_uncalibrated_mgf=true",
                 // FragPipe creates large output files that we don't want to keep (even if post-processing fails)
                 mJobParams.AddResultFileExtensionToSkip("_calibrated.mzML");
+                mJobParams.AddResultFileExtensionToSkip("_calibrated.mzbin");
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
                 // Move the plot files into each experiment group working directory
