@@ -674,7 +674,7 @@ namespace AnalysisManagerFragPipePlugIn
             foreach (var datasetID in experimentGroup.Value)
             {
                 var datasetName = dataPackageInfo.Datasets[datasetID];
-                var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(mWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile);
+                var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(mWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile, out _);
 
                 if (pepXmlFiles.Count > 0)
                     return mWorkingDirectory;
@@ -690,7 +690,8 @@ namespace AnalysisManagerFragPipePlugIn
             DirectoryInfo workingDirectory,
             bool diaSearchEnabled,
             string datasetName,
-            out FileInfo pinFile)
+            out FileInfo pinFile,
+            out string searchPattern)
         {
             var pepXmlFiles = new List<FileInfo>();
 
@@ -705,14 +706,15 @@ namespace AnalysisManagerFragPipePlugIn
                 //   QC_Dataset_rank1.pepXML
                 //   QC_Dataset_rank2.pepXML
 
-                var searchPattern = string.Format("{0}_rank*{1}", datasetName, PEPXML_EXTENSION);
+                searchPattern = string.Format("{0}_rank*{1}", datasetName, PEPXML_EXTENSION);
 
                 pepXmlFiles.AddRange(workingDirectory.GetFiles(searchPattern));
 
                 return pepXmlFiles.Count > 0 ? pepXmlFiles : new List<FileInfo>();
             }
 
-            pepXmlFiles.Add(new FileInfo(Path.Combine(workingDirectory.FullName, datasetName + PEPXML_EXTENSION)));
+            searchPattern = datasetName + PEPXML_EXTENSION;
+            pepXmlFiles.Add(new FileInfo(Path.Combine(workingDirectory.FullName, searchPattern)));
 
             return pepXmlFiles[0].Exists ? pepXmlFiles : new List<FileInfo>();
         }
@@ -2949,7 +2951,7 @@ namespace AnalysisManagerFragPipePlugIn
                             optionalDatasetInfo = string.Empty;
                         }
 
-                        var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(experimentWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile);
+                        var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(experimentWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile, out var searchPattern);
 
                         if (pepXmlFiles.Count == 0)
                         {
@@ -2962,16 +2964,18 @@ namespace AnalysisManagerFragPipePlugIn
                                 return false;
                             }
 
+                            var searchDetails = string.Format("diaSearchEnabled={0}; search pattern={1}; working directory={2}", diaSearchEnabled, searchPattern, experimentWorkingDirectory.FullName);
+
                             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                             if (diaSearchEnabled)
                             {
-                                // FragPipe did not create any .pepXML files
-                                LogError(string.Format("FragPipe did not create any .pepXML files{0}", optionalDatasetInfo));
+                                // FragPipe did not create any .pepXML files for dataset
+                                LogError(string.Format("FragPipe did not create any .pepXML files{0}; {1}", optionalDatasetInfo, searchDetails));
                             }
                             else
                             {
                                 // FragPipe did not create a .pepXML file for dataset
-                                LogError(string.Format("FragPipe did not create a .pepXML file{0}", optionalDatasetInfo));
+                                LogError(string.Format("FragPipe did not create a .pepXML file{0}; {1}", optionalDatasetInfo, searchDetails));
                             }
 
                             // Treat this as a fatal error
