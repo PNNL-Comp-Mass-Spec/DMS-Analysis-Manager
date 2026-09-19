@@ -17,6 +17,8 @@ using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerTopFDPlugIn
 {
+    // Ignore Spelling: Deconvolution, Lumos, msalign
+
     /// <summary>
     /// Class for running TopFD analysis
     /// </summary>

@@ -274,7 +274,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <remarks>this method is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
         /// <param name="fastaFile">FASTA file</param>
-        /// <param name="remoteIndexDirPath">Remove index directory ptah</param>
+        /// <param name="remoteIndexDirPath">Remove index directory path</param>
         /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="managerName">Manager name (only required because the constructor for PRISM.FileTools requires this)</param>
         /// <param name="createIndexFileForExistingFiles">
