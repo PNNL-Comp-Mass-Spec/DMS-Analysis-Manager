@@ -1868,6 +1868,17 @@ namespace AnalysisManagerFragPipePlugIn
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mzbin");
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
+                // DIA-NN creates file spectraRT.predicted.bin when running MSBooster
+                // Although generally around 100 MB in size, for jobs that process data packages, the file can be quite large (for example, 2.5 GB)
+                // Ignore the file if it is over 250 MB
+                foreach (var spectraRTFile in mWorkingDirectory.GetFiles("spectraRT.predicted.bin", SearchOption.AllDirectories))
+                {
+                    if (spectraRTFile.Length > 250 * 1024 * 1024)
+                    {
+                        mJobParams.AddResultFileToSkip(spectraRTFile.Name);
+                    }
+                }
+
                 // Move the plot files into each experiment group working directory
                 MovePlotFiles();
 
