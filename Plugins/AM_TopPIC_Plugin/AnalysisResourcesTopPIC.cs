@@ -34,6 +34,11 @@ namespace AnalysisManagerTopPICPlugIn
         public const string MSALIGN_FILE_SUFFIX = "_ms2.msalign";
 
         /// <summary>
+        /// .sqlite file created by TopFD
+        /// </summary>
+        public const string TOPFD_SQLITE_FILE_SUFFIX = ".sqlite";
+
+        /// <summary>
         /// Initialize options
         /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
@@ -127,6 +132,13 @@ namespace AnalysisManagerTopPICPlugIn
                 // Also retrieve the _html.zip file, though it is not required to exist
                 // In particular, if the TopFD step for this job used TopFD results from a prior job, the transfer directory will not have an _html.zip file
                 filesToRetrieve.Add(htmlFileName, true);
+            }
+
+            var sqlLiteFile = new FileInfo(Path.Combine(sourceDirPath, DatasetName + TOPFD_SQLITE_FILE_SUFFIX));
+
+            if (sqlLiteFile.Exists)
+            {
+                filesToRetrieve.Add(sqlLiteFile.Name, false);
             }
 
             foreach (var fileToRetrieve in filesToRetrieve)
