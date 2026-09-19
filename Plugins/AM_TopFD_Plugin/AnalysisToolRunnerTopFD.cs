@@ -221,7 +221,7 @@ namespace AnalysisManagerTopFDPlugIn
                 {"SNRatioMS2", "ms-two-sn-ratio"},
                 {"PrecursorWindow", "precursor-window"},
                 {"MS1Missing", "missing-level-one"},
-                {"DisableHtmlOutput", "skip-html-folder"}      // Argument --skip-html-folder was removed from TopFD v1.9
+                {"DisableHtmlOutput", "skip-html-folder"}      // Argument --skip-html-folder was removed from TopFD v1.5 (which is included with TopPIC v1.9)
             };
         }
 
@@ -426,10 +426,15 @@ namespace AnalysisManagerTopFDPlugIn
 
             cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
 
-            // htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
-
-            // Argument --skip-html-folder was removed from TopFD v1.9, so we will always set htmlOutputDisabled to false
-            htmlOutputDisabled = false;
+            if (mTopFDVersion >= new Version(1, 5))
+            {
+                // Argument --skip-html-folder was removed from TopFD v1.5, so always set htmlOutputDisabled to false
+                htmlOutputDisabled = false;
+            }
+            else
+            {
+                htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
+            }
 
             if (cmdLineArguments.Length == 0)
             {
@@ -443,6 +448,13 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 if (!paramFileReader.ParamIsEnabled(paramFileEntries, paramName))
                     continue;
+
+                if (paramName.Equals("DisableHtmlOutput", StringComparison.OrdinalIgnoreCase) && !htmlOutputDisabled)
+                {
+                    // This parameter is enabled, but the argument is not supported in this version of TopFD
+                    LogWarning("TopFD parameter DisableHtmlOutput is enabled, but the argument --skip-html-folder is not supported in this version of TopFD; ignoring");
+                    continue;
+                }
 
                 if (paramToArgMapping.TryGetValue(paramName, out var argumentName))
                 {
@@ -1015,10 +1027,12 @@ namespace AnalysisManagerTopFDPlugIn
                     Dataset + "_file"
                 };
 
-                if (!htmlOutputDisabled)
+                // The following was applicable with TopFD v1.4 and earlier, but TopFD v1.5 no longer creates the _html subdirectory,
+                // Thus, do not attempt to zip the _html subdirectory if TopFD v1.5 or later was used
+
+                if (!htmlOutputDisabled && mTopFDVersion < new Version(1, 5))
                 {
-                    // The following was applicable with TopFD v1.8 and earlier, but TopFD v1.9 no longer creates the _html subdirectory
-                    // subdirectoriesToZip.Add(Dataset + "_html");
+                    subdirectoriesToZip.Add(Dataset + "_html");
                 }
 
                 foreach (var subdirectoryName in subdirectoriesToZip)
