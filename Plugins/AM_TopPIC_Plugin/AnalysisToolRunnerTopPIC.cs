@@ -26,7 +26,8 @@ namespace AnalysisManagerTopPICPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerTopPIC : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: cmd, Csv, fasta, html, json, msalign, num, proteoform, proteoforms, prsm, ptm, toppic, Unimod
+        // Ignore Spelling: cmd, Csv, Da, fasta, html, json, msalign, num, preprocessing, proteoform, proteoforms, prsm, ptm, toppic, Unimod
+        // Ignore Spelling: Carbamyl, Deamide, Dimethyl, Phosph, Trimethyl, Nethylmaleimide
 
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
         private const string TOPPIC_EXE_NAME = "toppic.exe";
@@ -257,7 +258,7 @@ namespace AnalysisManagerTopPICPlugIn
                 {"Decoy", "decoy"},
                 {"NTerminalProteinForms", "n-terminal-form"},
                 {"KeepTempFiles", "keep-temp-files"},
-                {"DisableHtmlOutput", "skip-html-folder"}
+                {"DisableHtmlOutput", "skip-html-folder"}       // Argument --skip-html-folder was removed from TopPIC v1.9)
             };
 
             if (useSeparateErrorTolerances)
@@ -780,9 +781,22 @@ namespace AnalysisManagerTopPICPlugIn
                 "DisableHtmlOutput"
             };
 
-            cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
+            if (mTopPICVersion >= new Version(1, 9))
+            {
+                // Argument --skip-html-folder was removed from TopPIC v1.9, so always set htmlOutputDisabled to false
+                for (var i = 0; i < paramFileEntries.Count; i++)
+                {
+                    if (paramFileEntries[i].Key.Equals("DisableHtmlOutput", StringComparison.OrdinalIgnoreCase))
+                    {
+                        paramFileEntries[i] = new KeyValuePair<string, string>(paramFileEntries[i].Key, "false");
+                        break;
+                    }
+                }
+            }
 
             htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
+
+            cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
 
             if (cmdLineArguments.Length == 0)
             {
@@ -1882,6 +1896,13 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (!sourceDirectory.Exists)
                 {
+                    // The following was applicable with TopPIC v1.8 and earlier, but TopFD v1.9 no longer creates the _html subdirectory
+                    // Thus, do not attempt to zip the _html subdirectory if TopFD v1.9 or later was used
+                    if (mTopPICVersion >= new Version(1, 9))
+                    {
+                        return true;
+                    }
+
                     return htmlOutputDisabled && directorySuffix.Equals("_html");
                 }
 

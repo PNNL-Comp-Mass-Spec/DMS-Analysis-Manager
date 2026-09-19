@@ -1027,7 +1027,7 @@ namespace AnalysisManagerTopFDPlugIn
                     Dataset + "_file"
                 };
 
-                // The following was applicable with TopFD v1.4 and earlier, but TopFD v1.5 no longer creates the _html subdirectory,
+                // The following was applicable with TopFD v1.4 and earlier, but TopFD v1.5 no longer creates the _html subdirectory
                 // Thus, do not attempt to zip the _html subdirectory if TopFD v1.5 or later was used
 
                 if (!htmlOutputDisabled && mTopFDVersion < new Version(1, 5))
