@@ -190,8 +190,8 @@ namespace AnalysisManagerTopFDPlugIn
         /// Zip the _file and _html directories, if they exist
         /// Next, Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
-        /// <param name="zipSubdirectories"></param>
-        /// <param name="htmlOutputDisabled"></param>
+        /// <param name="zipSubdirectories">True to zip the _file and _html subdirectories</param>
+        /// <param name="htmlOutputDisabled">Output: True if the parameter file has DisableHtmlOutput=True</param>
         /// <returns>True if success, otherwise false</returns>
         private bool CopyResultsToTransferDirectory(bool zipSubdirectories, bool htmlOutputDisabled)
         {
@@ -221,7 +221,7 @@ namespace AnalysisManagerTopFDPlugIn
                 {"SNRatioMS2", "ms-two-sn-ratio"},
                 {"PrecursorWindow", "precursor-window"},
                 {"MS1Missing", "missing-level-one"},
-                {"DisableHtmlOutput", "skip-html-folder"}
+                {"DisableHtmlOutput", "skip-html-folder"}      // Argument --skip-html-folder was removed from TopFD v1.9
             };
         }
 
@@ -250,7 +250,7 @@ namespace AnalysisManagerTopFDPlugIn
             // Processing spectrum Scan_350...         3% finished.
             // Processing spectrum Scan_351...         3% finished.
             // Deconvolution finished.
-            // Runing time: 51 seconds.
+            // Running time: 51 seconds.
             // TopFD finished.
 
             // ReSharper restore CommentTypo
@@ -426,7 +426,10 @@ namespace AnalysisManagerTopFDPlugIn
 
             cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
 
-            htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
+            // htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
+
+            // Argument --skip-html-folder was removed from TopFD v1.9, so we will always set htmlOutputDisabled to false
+            htmlOutputDisabled = false;
 
             if (cmdLineArguments.Length == 0)
             {
@@ -1014,7 +1017,8 @@ namespace AnalysisManagerTopFDPlugIn
 
                 if (!htmlOutputDisabled)
                 {
-                    subdirectoriesToZip.Add(Dataset + "_html");
+                    // The following was applicable with TopFD v1.8 and earlier, but TopFD v1.9 no longer creates the _html subdirectory
+                    // subdirectoriesToZip.Add(Dataset + "_html");
                 }
 
                 foreach (var subdirectoryName in subdirectoriesToZip)
