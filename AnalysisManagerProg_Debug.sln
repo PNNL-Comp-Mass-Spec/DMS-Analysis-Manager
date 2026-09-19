@@ -34,6 +34,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerNOMAnnotatio
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerFormularityPlugin", "Plugins\AM_Formularity\AnalysisManagerFormularityPlugin.csproj", "{0D58E37F-A5FB-4529-BF14-8F4BA9BB2EBF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTopPICPlugIn", "Plugins\AM_TopPIC_Plugin\AnalysisManagerTopPICPlugIn.csproj", "{0E0AFB73-3BAC-4093-8F25-B411E8416623}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTopFDPlugIn", "Plugins\AM_TopFD_Plugin\AnalysisManagerTopFDPlugIn.csproj", "{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +108,14 @@ Global
 		{0D58E37F-A5FB-4529-BF14-8F4BA9BB2EBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D58E37F-A5FB-4529-BF14-8F4BA9BB2EBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D58E37F-A5FB-4529-BF14-8F4BA9BB2EBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E0AFB73-3BAC-4093-8F25-B411E8416623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E0AFB73-3BAC-4093-8F25-B411E8416623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E0AFB73-3BAC-4093-8F25-B411E8416623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E0AFB73-3BAC-4093-8F25-B411E8416623}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -89,7 +89,7 @@
       <Version>2.9.25</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.1.23</Version>
+      <Version>1.1.24</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.118</Version>

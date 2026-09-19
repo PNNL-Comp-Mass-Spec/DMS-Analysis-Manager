@@ -52,7 +52,7 @@
       <Version>2.9.25</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.1.22</Version>
+      <Version>1.1.24</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
