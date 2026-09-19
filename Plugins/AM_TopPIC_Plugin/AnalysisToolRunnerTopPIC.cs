@@ -105,8 +105,8 @@ namespace AnalysisManagerTopPICPlugIn
                 }
                 else
                 {
-                    // We're probably running TopPIC v1.7 (or newer)
-                    mTopPICVersion = new Version(1, 7);
+                    // We're probably running TopPIC v1.9 (or newer)
+                    mTopPICVersion = new Version(1, 9);
                 }
 
                 // Store the TopPIC version info in the database after the first line is written to file TopPIC_ConsoleOutput.txt
