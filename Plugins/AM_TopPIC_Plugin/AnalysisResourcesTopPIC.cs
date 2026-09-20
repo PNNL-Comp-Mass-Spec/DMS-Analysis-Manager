@@ -140,6 +140,16 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 filesToRetrieve.Add(sqlLiteFile.Name, false);
             }
+            else
+            {
+                // The SQLite file might include a CV value, e.g. DatasetName_-35.sqlite
+                var sourceDirectory = new DirectoryInfo(sourceDirPath);
+
+                foreach (var file in sourceDirectory.GetFileSystemInfos("*" + TOPFD_SQLITE_FILE_SUFFIX))
+                {
+                    filesToRetrieve.Add(file.Name, false);
+                }
+            }
 
             foreach (var fileToRetrieve in filesToRetrieve)
             {
