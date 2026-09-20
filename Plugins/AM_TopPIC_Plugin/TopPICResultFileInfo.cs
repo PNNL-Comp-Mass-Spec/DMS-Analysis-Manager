@@ -15,16 +15,24 @@
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="baseName"></param>
-        /// <param name="prsmFileSuffix"></param>
-        /// <param name="proteoformFileSuffix"></param>
-        /// <param name="isCsvDelimited"></param>
+        /// <param name="baseName">Base name</param>
+        /// <param name="prsmFileSuffix">PrSM file suffix</param>
+        /// <param name="proteoformFileSuffix">Proteoform file suffix</param>
+        /// <param name="isCsvDelimited">True if a csv file, false if a TSV file</param>
         public TopPICResultFileInfo(string baseName, string prsmFileSuffix, string proteoformFileSuffix, bool isCsvDelimited = false)
         {
             BaseName = baseName;
             PrsmFileSuffix = prsmFileSuffix;
             ProteoformFileSuffix = proteoformFileSuffix;
             IsCsvDelimited = isCsvDelimited;
+        }
+
+        /// <summary>
+        /// Show the PrSM filename and the Proteoform filename
+        /// </summary>
+        public override string ToString()
+        {
+            return string.Format("PrSM file: {0}, Proteoform file: {1}", BaseName + PrsmFileSuffix, BaseName + ProteoformFileSuffix);
         }
     }
 }

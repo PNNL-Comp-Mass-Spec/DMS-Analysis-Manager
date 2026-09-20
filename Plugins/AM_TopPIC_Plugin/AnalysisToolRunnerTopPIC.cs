@@ -1348,7 +1348,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                     if (!sourceProteoformFile.Exists)
                     {
-                        LogError("TopPIC Prsm results file exists ({0}) but the proteoform results file is missing ({1})", sourcePrsmFile.Name, sourceProteoformFile.Name);
+                        LogError("TopPIC PrSM results file exists ({0}) but the proteoform results file is missing ({1})", sourcePrsmFile.Name, sourceProteoformFile.Name);
                         break;
                     }
 
@@ -1356,7 +1356,7 @@ namespace AnalysisManagerTopPICPlugIn
                     var targetProteoformFile = new FileInfo(Path.Combine(mWorkDir, resultFileInfo.BaseName + PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL));
 
                     // Create file Dataset_TopPIC_PrSMs.txt
-                    // In addition, extract the **** Parameters **** block from the start of the PRSM results file and save to TopPIC_RuntimeParameters.txt
+                    // In addition, extract the **** Parameters **** block from the start of the PrSM results file and save to TopPIC_RuntimeParameters.txt
 
                     if (ValidateResultTableFile(sourcePrsmFile, targetPrsmFile, true, resultFileInfo.IsCsvDelimited))
                     {
@@ -1396,22 +1396,22 @@ namespace AnalysisManagerTopPICPlugIn
 
                     if (prsmResultsFound == 0)
                     {
-                        // TopPIC Prsm results file not found
+                        // TopPIC PrSM results file not found
                         LogError(string.Format(
-                            "TopPIC Prsm results {0} not found",
+                            "TopPIC PrSM results {0} not found",
                             expectedPrsmResults > 1 ? "files" : "file"));
                     }
                     else if (expectedPrsmResults == 1)
                     {
-                        LogError("TopPIC Prsm results file is not valid");
+                        LogError("TopPIC PrSM results file is not valid");
                     }
                     else if (validPrsmResults > 0)
                     {
-                        LogError("{0} / {1} TopPIC Prsm results files were not valid", expectedPrsmResults - validPrsmResults, expectedPrsmResults);
+                        LogError("{0} / {1} TopPIC PrSM results files were not valid", expectedPrsmResults - validPrsmResults, expectedPrsmResults);
                     }
                     else
                     {
-                        LogError("None of the TopPIC Prsm results files were valid");
+                        LogError("None of the TopPIC PrSM results files were valid");
                     }
                 }
 
