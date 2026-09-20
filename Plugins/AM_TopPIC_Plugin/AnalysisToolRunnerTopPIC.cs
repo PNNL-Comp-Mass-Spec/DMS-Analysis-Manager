@@ -1326,6 +1326,45 @@ namespace AnalysisManagerTopPICPlugIn
                     expectedPrsmResults = msAlignFiles.Count;
                 }
 
+                if (mTopPICVersion >= new Version(1, 9))
+                {
+                    // TopPIC v1.9 creates file DatasetName_ms2.toppic_raw_prsm
+                    // Rename it to DatasetName_ms2_toppic_prsm.xml to match the previous versions and to have the correct file extension
+                    var rawPrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_ms2.toppic_raw_prsm"));
+
+                    if (rawPrsmFile.Exists)
+                    {
+                        rawPrsmFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_ms2_toppic_prsm.xml"));
+                    }
+
+                    // Method GetResources in class AnalysisResourcesTopPIC created an html directory, since that was required for versions prior to TopPIC v1.9
+                    // Since it is no longer used, removed it
+                    var htmlDirectory = new DirectoryInfo(Path.Combine(mWorkDir, mDatasetName + "_html"));
+
+                    if (htmlDirectory.Exists)
+                    {
+                        htmlDirectory.Delete();
+                    }
+
+                    // TopPIC v1.9 uses "_post_ms2" instead of "_ms2"
+                    var resultFilesToAdd = new List<TopPICResultFileInfo>();
+
+                    foreach (var resultFile in resultFileNames)
+                    {
+                        if (!resultFile.ProteoformFileSuffix.EndsWith(".tsv", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        resultFilesToAdd.Add(
+                            new TopPICResultFileInfo(
+                                resultFile.BaseName,
+                                "_post" + resultFile.PrsmFileSuffix,
+                                "_post" + resultFile.ProteoformFileSuffix,
+                                resultFile.IsCsvDelimited));
+                    }
+
+                    resultFileNames.AddRange(resultFilesToAdd);
+                }
+
                 var prsmResultsFound = 0;
 
                 var validPrsmResults = 0;
@@ -1467,6 +1506,13 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                 }
 
+                if (mTopPICVersion >= new Version(1, 9))
+                {
+                    // TopPIC 1.9 (September 2026) does not create any html directories
+                    // Return true since there is nothing to zip
+                    return true;
+                }
+
                 // Zip the Html directory (or directories)
                 // TopPIC 1.2 (November 2018) created Html directories that include the text _ms2_toppic
                 // TopPIC 1.3 (January 2020) and newer create just one _html directory, named DatasetName_html
@@ -1485,7 +1531,6 @@ namespace AnalysisManagerTopPICPlugIn
                     {
                         // baseName should be of the form DatasetName_0
                         // Remove the dataset name from baseName then add to directoriesToCompress
-
                         directorySuffixesToCompress.Add(string.Format("{0}_html", baseName.Substring(mDatasetName.Length)));
                     }
                 }
@@ -1896,13 +1941,6 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (!sourceDirectory.Exists)
                 {
-                    // The following was applicable with TopPIC v1.8 and earlier, but TopFD v1.9 no longer creates the _html subdirectory
-                    // Thus, do not attempt to zip the _html subdirectory if TopFD v1.9 or later was used
-                    if (mTopPICVersion >= new Version(1, 9))
-                    {
-                        return true;
-                    }
-
                     return htmlOutputDisabled && directorySuffix.Equals("_html");
                 }
 
