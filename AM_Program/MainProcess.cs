@@ -200,7 +200,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Initializes the database logger in static class PRISM.Logging.LogTools
         /// </summary>
-        /// <remarks>Supports both SQL Server and Postgres connection strings</remarks>
+        /// <remarks>Supports both SQL Server and PostgreSQL connection strings</remarks>
         /// <param name="connectionString">Database connection string</param>
         /// <param name="moduleName">Module name used by logger</param>
         /// <param name="traceMode">When true, show additional debug messages at the console</param>
@@ -217,7 +217,7 @@ namespace AnalysisManagerProg
             {
                 DbServerTypes.MSSQLServer => new PRISMDatabaseUtils.Logging.SQLServerDatabaseLogger(),
                 DbServerTypes.PostgreSQL => new PostgresDatabaseLogger(),
-                _ => throw new Exception("Unsupported database connection string: should be SQL Server or Postgres")
+                _ => throw new Exception("Unsupported database connection string: should be SQL Server or PostgreSQL")
             };
 
             dbLogger.ChangeConnectionInfo(moduleName, connectionString);

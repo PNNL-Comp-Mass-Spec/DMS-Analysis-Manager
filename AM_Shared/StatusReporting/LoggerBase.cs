@@ -10,6 +10,8 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     public abstract class LoggerBase
     {
+        // Ignore Spelling: unregister, unregistering
+
         /// <summary>
         /// Debug level
         /// </summary>

@@ -36,10 +36,11 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public abstract class AnalysisResources : AnalysisMgrBase, IAnalysisResources
     {
-        // Ignore Spelling: acqu, baf, cdf, cdta, centroided, Cn, deconv, dta, Fasta, fht, fid, Formularity, gz, gzip, hashcheck, histone, loc
+        // Ignore Spelling: acqu, baf, cdf, cdta, centroided, Cn, deconv, dms, dta, Fasta, fht, fid, Formularity, gz, gzip, hashcheck, histone, loc
         // Ignore Spelling: maldi, MaxQuant, mgf, MODa, msalign, MSFragger, msgf, msgfdb, msgfplus, MSPathFinder, msxml, myemsl, mzml, mzxml, na, num
-        // Ignore Spelling: parm, pbf, protoapps, psm, ReporterIons, resourcer, sequest, ser, tdf, tims, tof, tsv, uimf, unpurged, utils, wiff, xt, xtandem
-        // Ignore Spelling: Bruker, Micromass, Orbitrap
+        // Ignore Spelling: parm, pbf, protoapps, psm, ReporterIons, recurse, resourcer, sequest, ser, svc, tdf
+        // Ignore Spelling: timespan, tims, tof, tsv, uimf, unpurged, utils, wiff, xt, xtandem
+        // Ignore Spelling: Bruker, Micromass, Orbitrap, Thermo
 
         /// <summary>
         /// Dataset name for aggregation jobs

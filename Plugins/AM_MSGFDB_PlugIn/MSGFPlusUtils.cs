@@ -25,9 +25,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: Arg, Bruker, ccm, centroided, Chymotrypsin, cid, Conc, cp, defs, dto, endopeptidase, etd, Exactive, Exploris, FASTA, FDRs, frag
-        // Ignore Spelling: Glu, glutamyl, hashcheck, hcd, hmsn, Hydroxyproline, hyperthreading, ident, iso, loc, Lumos, Lys, msn, mzid, MSGF, MSGFPlus, MZIDto, prog
-        // Ignore Spelling: na, nnet, novo, ntt, Orbitrap, phosphorylated, phospho, Phosphorylation, pre, prepended, prot
-        // Ignore Spelling: tda, tims, Tryp, tryptic, Tsv, utils, Xmx
+        // Ignore Spelling: Glu, glutamyl, hashcheck, hcd, hmsn, Hydroxylation, Hydroxyproline, hyperthreading, ident, iso, loc, Lumos, Lys, msn, mzid, MSGF, MSGFPlus, MZIDto
+        // Ignore Spelling: Preprocessing, prog, na, nnet, novo, ntt, Orbitrap, phosphorylated, phospho, Phosphorylation, pre, prepended, prot
+        // Ignore Spelling: tda, Thermo, tims, Tryp, tryptic, Tsv, utils, Xmx
 
         // ReSharper restore CommentTypo
 
@@ -3144,7 +3144,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var sqlStr = new StringBuilder();
 
-                // This query runs quickly on SQL Server but takes ~4 seconds on Postgres
+                // This query runs quickly on SQL Server but takes ~4 seconds on PostgreSQL
 
                 // SELECT "HMS", "MS", "CID-HMSn", "CID-MSn",
                 //        "ETD-HMSn", "SA_CID-HMSn",

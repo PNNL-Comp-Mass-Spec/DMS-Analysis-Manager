@@ -31,7 +31,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
     /// </summary>
     public class AnalysisToolRunnerNOMAnnotation : AnalysisToolRunnerBase
     {
-        // Ignore Spelling:
+        // Ignore Spelling: Formularity, isotopologue, masslist, OK, utf
 
         /// <summary>
         /// Procedure used to store the natural organic matter stats in the database
@@ -405,7 +405,7 @@ namespace AnalysisManagerNOMAnnotationPlugin
         /// <param name="datasetFile">Dataset file (analysis.baf or analysis.tdf)</param>
         /// <param name="datasetResultFiles">List of JSON result files for the current dataset (one per scan)</param>
         /// <param name="pythonExe">Python .exe</param>
-        /// <param name="pythonScriptFile">Python script fil</param>
+        /// <param name="pythonScriptFile">Python script file</param>
         /// <param name="referenceMassFilePath">Reference mass file path</param>
         /// <param name="formulaTableFilePath">Formula table file path</param>
         /// <returns>True if successful, false if an error</returns>

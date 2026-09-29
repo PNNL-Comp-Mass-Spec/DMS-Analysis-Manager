@@ -31,7 +31,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: Batmass, centroided, cp, Da, deisotoping, DIA, fragpipe, fragger, java,
-        // Ignore Spelling: na, num, pepindex, postprocessing, timsdata, Xmx
+        // Ignore Spelling: na, num, pepindex, postprocessing, Thermo, timsdata, Xmx
         // Ignore Spelling: \batmass-io, \fragpipe, \tools
 
         // ReSharper restore CommentTypo
