@@ -26,7 +26,8 @@ namespace AnalysisManagerTopPICPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerTopPIC : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: cmd, Csv, Da, fasta, html, json, msalign, num, preprocessing, proteoform, proteoforms, prsm, ptm, toppic, Unimod
+        // Ignore Spelling: cmd, Csv, Da, fasta, html, json, msalign, num
+        // Ignore Spelling: prec, preprocessing, proteoform, proteoforms, prsm, ptm, toppic, Unimod
         // Ignore Spelling: Carbamyl, Deamide, Dimethyl, Phosph, Trimethyl, Nethylmaleimide
 
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
@@ -105,8 +106,8 @@ namespace AnalysisManagerTopPICPlugIn
                 }
                 else
                 {
-                    // We're probably running TopPIC v1.9 (or newer)
-                    mTopPICVersion = new Version(1, 9);
+                    // We're probably running TopPIC v2.0 (or newer)
+                    mTopPICVersion = new Version(2, 0);
                 }
 
                 // Store the TopPIC version info in the database after the first line is written to file TopPIC_ConsoleOutput.txt
@@ -243,7 +244,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Returns a dictionary mapping parameter names to argument names
         /// </summary>
-        /// <param name="useSeparateErrorTolerances"></param>
+        /// <param name="useSeparateErrorTolerances">When true, use separate error tolerances</param>
         private Dictionary<string, string> GetTopPICParameterNames(bool useSeparateErrorTolerances)
         {
             var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -261,7 +262,19 @@ namespace AnalysisManagerTopPICPlugIn
                 {"DisableHtmlOutput", "skip-html-folder"}       // Argument --skip-html-folder was removed from TopPIC v1.9)
             };
 
-            if (useSeparateErrorTolerances)
+            if (mTopPICVersion >= new Version(2, 0))
+            {
+                paramToArgMapping.Add("ErrorTolerance", "frag-error-tolerance");        // TopPIC parameter files for v2.0 and later use "FragmentErrorTolerance" and "PrecursorErrorTolerance" instead of "ErrorTolerance"
+                paramToArgMapping.Add("FragmentErrorTolerance", "frag-error-tolerance");
+                paramToArgMapping.Add("PrecursorErrorTolerance", "prec-error-tolerance");
+                paramToArgMapping.Add("ProteoformErrorTolerance", "proteoform-error-tolerance");
+            }
+            else if (mTopPICVersion >= new Version(1, 9))
+            {
+                paramToArgMapping.Add("ErrorTolerance", "mass-error-tolerance");
+                paramToArgMapping.Add("ProteoformErrorTolerance", "proteoform-error-tolerance");
+            }
+            else if (useSeparateErrorTolerances)
             {
                 // TopPIC 1.3 renamed the error tolerance parameter to --mass-error-tolerance
                 paramToArgMapping.Add("ErrorTolerance", "mass-error-tolerance");
