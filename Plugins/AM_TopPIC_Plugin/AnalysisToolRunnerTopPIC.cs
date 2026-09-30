@@ -512,13 +512,12 @@ namespace AnalysisManagerTopPICPlugIn
 
             // RegEx to match lines like:
             // E-value computation - processing 560 of 2782 spectra.
-            var incrementalProgressMatcher = new Regex(@"processing (?<Item>\d+) of (?<Total>\d+) [a-z]+",
-                                                       RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var incrementalProgressMatcher = new Regex(@"processing (?<Item>\d+) of (?<Total>\d+) [a-z]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // RegEx to match lines like:
             // Generating xml files - processing 398 PrSMs.
-            var undefinedProgressMatcher = new Regex(@"\bprocessing (?<Item>\d+) [a-z ]+\.",
-                                                       RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var undefinedProgressMatcher = new Regex(@"\bprocessing (?<Item>\d+) [a-z ]+\.", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             // RegEx to match lines like:
             // Non PTM filtering - processing 9.03%.
             var percentCompleteMatcher = new Regex("\bprocessing (?<Progress>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -1343,11 +1342,20 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     // TopPIC v1.9 creates file DatasetName_ms2.toppic_raw_prsm
                     // Rename it to DatasetName_ms2_toppic_prsm.xml to match the previous versions and to have the correct file extension
-                    var rawPrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_ms2.toppic_raw_prsm"));
+                    var rawPrsmFile1 = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_ms2.toppic_raw_prsm"));
 
-                    if (rawPrsmFile.Exists)
+                    if (rawPrsmFile1.Exists)
                     {
-                        rawPrsmFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_ms2_toppic_prsm.xml"));
+                        rawPrsmFile1.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_ms2_toppic_prsm.xml"));
+                    }
+
+                    // TopPIC v2.0 creates file DatasetName_post_ms2.toppic_record_prsm
+                    // Rename it to DatasetName_post_ms2_toppic_record_prsm.xml so that it has the correct file extension
+                    var rawPrsmFile2 = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_post_ms2.toppic_record_prsm"));
+
+                    if (rawPrsmFile2.Exists)
+                    {
+                        rawPrsmFile2.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_post_ms2_toppic_record_prsm.xml"));
                     }
 
                     // Method GetResources in class AnalysisResourcesTopPIC created an html directory, since that was required for versions prior to TopPIC v1.9
