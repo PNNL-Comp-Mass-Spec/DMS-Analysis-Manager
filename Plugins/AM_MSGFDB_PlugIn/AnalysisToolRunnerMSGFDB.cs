@@ -776,8 +776,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (splitFastaEnabled)
             {
-                var tsvFileName = ParallelMSGFPlusRenameFile(Path.GetFileName(tsvFilePath));
-                return tsvFileName;
+                return ParallelMSGFPlusRenameFile(Path.GetFileName(tsvFilePath));
             }
 
             return Path.GetFileName(tsvFilePath);

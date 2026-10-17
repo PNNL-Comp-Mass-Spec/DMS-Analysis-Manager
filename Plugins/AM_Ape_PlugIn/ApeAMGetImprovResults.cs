@@ -23,8 +23,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         public bool GetImprovResults()
         {
-            var success = GetImprovResultsAll();
-            return success;
+            return GetImprovResultsAll();
         }
 
         private bool GetImprovResultsAll()

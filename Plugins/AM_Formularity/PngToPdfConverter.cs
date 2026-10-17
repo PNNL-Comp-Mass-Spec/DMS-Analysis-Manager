@@ -53,8 +53,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <param name="pdfDoc">PDF document</param>
         private PdfPageInfo AddPage(PdfDocument pdfDoc)
         {
-            var currentPageInfo = new PdfPageInfo(pdfDoc, PageMargin, PageOrientation.Landscape);
-            return currentPageInfo;
+            return new PdfPageInfo(pdfDoc, PageMargin, PageOrientation.Landscape);
         }
 
         /// <summary>

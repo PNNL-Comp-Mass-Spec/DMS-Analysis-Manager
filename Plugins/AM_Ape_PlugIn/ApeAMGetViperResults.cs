@@ -28,8 +28,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         public bool GetQRollupResults()
         {
-            var success = GetViperResultsAll();
-            return success;
+            return GetViperResultsAll();
         }
 
         private bool GetViperResultsAll()

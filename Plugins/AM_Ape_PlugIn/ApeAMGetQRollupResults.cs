@@ -27,8 +27,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         public bool GetQRollupResults()
         {
-            var success = GetQRollupResultsAll();
-            return success;
+            return GetQRollupResultsAll();
         }
 
         private bool GetQRollupResultsAll()

@@ -409,8 +409,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo workingDirectory)
         {
-            var spectraFiles = workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
-            return spectraFiles;
+            return workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
         }
 
         /// <summary>

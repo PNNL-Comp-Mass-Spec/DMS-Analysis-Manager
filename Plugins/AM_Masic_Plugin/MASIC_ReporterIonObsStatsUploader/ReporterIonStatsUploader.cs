@@ -258,8 +258,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                     masicParameterFilePath = parameterFilePath;
                 }
 
-                var success = StoreReporterIonObservationRateStats(inputFile, masicParameterFilePath);
-                return success;
+                return StoreReporterIonObservationRateStats(inputFile, masicParameterFilePath);
             }
             catch (Exception ex)
             {

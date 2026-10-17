@@ -70,8 +70,7 @@ namespace AnalysisManagerPBFGenerator
 
                 currentTask = "Process MyEMSL Download Queue";
 
-                var success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
-                return success;
+                return ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
             }
             catch (Exception ex)
             {

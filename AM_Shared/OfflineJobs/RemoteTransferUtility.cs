@@ -273,8 +273,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 var sourceFileNames = new List<string> { sourceFile.Name };
 
-                var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO, useLockFile);
-                return success;
+                return CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO, useLockFile);
             }
             catch (Exception ex)
             {

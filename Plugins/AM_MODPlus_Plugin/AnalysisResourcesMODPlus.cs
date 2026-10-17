@@ -147,8 +147,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
-                var success = RetrieveGeneratedParamFile(paramFileName);
-                return success;
+                return RetrieveGeneratedParamFile(paramFileName);
             }
             catch (Exception ex)
             {

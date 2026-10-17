@@ -170,8 +170,7 @@ namespace AnalysisManagerBase.DataFileTools
                 // Dynamically load the specified class from dllFilePath
                 var assembly = System.Reflection.Assembly.LoadFrom(dllFilePath);
                 var dllType = assembly.GetType(className, false, true);
-                var newInstance = Activator.CreateInstance(dllType);
-                return newInstance;
+                return Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
             {

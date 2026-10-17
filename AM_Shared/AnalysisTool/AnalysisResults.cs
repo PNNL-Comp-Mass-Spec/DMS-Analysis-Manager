@@ -575,8 +575,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 try
                 {
-                    var directoryExists = Directory.Exists(directoryPath);
-                    return directoryExists;
+                    return Directory.Exists(directoryPath);
                 }
                 catch (Exception ex)
                 {

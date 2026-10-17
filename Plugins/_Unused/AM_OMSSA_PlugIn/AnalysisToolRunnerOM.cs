@@ -149,8 +149,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             var omssaresultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_om.omx");
 
-            var success = ZipFile(omssaresultsFilePath, true);
-            return success;
+            return ZipFile(omssaresultsFilePath, true);
         }
 
         /// <summary>

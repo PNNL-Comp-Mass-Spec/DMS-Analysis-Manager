@@ -81,14 +81,12 @@ namespace AnalysisManager_Ape_PlugIn
         {
             if (apeOperation.Equals("RunWorkFlow", StringComparison.OrdinalIgnoreCase))
             {
-                var success = GetWorkflowFiles();
-                return success;
+                return GetWorkflowFiles();
             }
 
             if (apeOperation.Equals("GetQRollupResults", StringComparison.OrdinalIgnoreCase))
             {
-                var success = GetQRollupFiles();
-                return success;
+                return GetQRollupFiles();
             }
 
             // For other modes, simply return true

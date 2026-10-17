@@ -119,7 +119,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             }
 
             /// <summary>
-            /// build query from its parts and return it
+            /// Build query from its parts and return it
             /// </summary>
             /// <param name="id">Value to use for primary identifier for query (typically data package ID)</param>
             /// <param name="filter">Value to use for supplemental filter (if one is defined in query template definition)</param>

@@ -70,8 +70,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         public string GetResultsDBFilePath()
         {
-            var dbFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
-            return dbFilePath;
+            return Path.Combine(WorkingDirPath, ResultsDBFileName);
         }
 
         public string RequireMgrParam(string paramName)

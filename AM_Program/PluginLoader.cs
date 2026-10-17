@@ -275,8 +275,7 @@ namespace AnalysisManagerProg
                         "examine plugin_info.xml for the mapping from step tool name to assembly and class", className));
                 }
 
-                var instance = Activator.CreateInstance(assemblyType);
-                return instance;
+                return Activator.CreateInstance(assemblyType);
             }
             catch (Exception ex)
             {

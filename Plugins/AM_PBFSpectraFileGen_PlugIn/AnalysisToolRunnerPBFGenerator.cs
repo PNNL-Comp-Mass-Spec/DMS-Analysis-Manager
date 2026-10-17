@@ -257,6 +257,7 @@ namespace AnalysisManagerPBFGenerator
         /// Furthermore, it looks like all of the data in the .raw file is cached in memory and the .PBF file is not created until the very end
         /// and thus this progress estimation is useless
         /// </summary>
+        /// <returns>Percent Complete (value between 0 and 100)</returns>
         private float EstimatePBFProgress()
         {
             try

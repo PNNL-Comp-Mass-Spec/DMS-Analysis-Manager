@@ -545,8 +545,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 currentTask = "Retrieving cached results";
 
-                var success = RetrieveExistingBaselineResultFile(baselineMetadata, out criticalError);
-                return success;
+                return RetrieveExistingBaselineResultFile(baselineMetadata, out criticalError);
             }
             catch (Exception ex)
             {

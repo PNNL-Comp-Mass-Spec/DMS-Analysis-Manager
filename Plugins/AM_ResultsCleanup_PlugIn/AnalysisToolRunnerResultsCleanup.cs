@@ -150,8 +150,7 @@ namespace AnalysisManagerResultsCleanupPlugin
         {
             try
             {
-                var result = RemoveOldResultsDb3Files(resultsDirectory);
-                return result;
+                return RemoveOldResultsDb3Files(resultsDirectory);
             }
             catch (Exception ex)
             {
