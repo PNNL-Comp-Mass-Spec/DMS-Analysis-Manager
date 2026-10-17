@@ -603,7 +603,7 @@ namespace AnalysisManagerMasicPlugin
         /// For example, if the DMS_Programs directory was copied from one server to another server,
         /// MasicStatus files from the old server may still be in the MASIC directory
         /// </remarks>
-        /// <param name="masicDirectoryPath"></param>
+        /// <param name="masicDirectoryPath">MASIC directory path</param>
         private void RemoveOldMasicStatusFiles(string masicDirectoryPath)
         {
             try
@@ -745,7 +745,7 @@ namespace AnalysisManagerMasicPlugin
         /// Validate that required options are defined in the MASIC parameter file
         /// </summary>
         /// <remarks>Also reads ReporterIonMassMode and ReporterIonObservationRateTopNPct</remarks>
-        /// <param name="parameterFilePath"></param>
+        /// <param name="parameterFilePath">Parameter file path</param>
         protected bool ValidateParameterFile(string parameterFilePath)
         {
             if (string.IsNullOrWhiteSpace(parameterFilePath))

@@ -72,13 +72,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="workDir"></param>
-        /// <param name="programPath"></param>
-        /// <param name="datasetName"></param>
-        /// <param name="rawDataType"></param>
-        /// <param name="eOutputType"></param>
-        /// <param name="centroidMSXML"></param>
-        /// <param name="jobParams"></param>
+        /// <param name="workDir">Working directory path</param>
+        /// <param name="programPath">Program path</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="rawDataType">Raw data type</param>
+        /// <param name="eOutputType">Output type</param>
+        /// <param name="centroidMSXML">Whether to centroid the peaks</param>
+        /// <param name="jobParams">Job parameters</param>
         protected MSXmlGen(
             string workDir,
             string programPath,
@@ -103,14 +103,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="workDir"></param>
-        /// <param name="programPath"></param>
-        /// <param name="datasetName"></param>
-        /// <param name="rawDataType"></param>
-        /// <param name="eOutputType"></param>
-        /// <param name="centroidMS1"></param>
-        /// <param name="centroidMS2"></param>
-        /// <param name="jobParams"></param>
+        /// <param name="workDir">Working directory path</param>
+        /// <param name="programPath">Program path</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="rawDataType">Raw data type</param>
+        /// <param name="eOutputType">Output type</param>
+        /// <param name="centroidMS1">Whether to centroid the MS1 peaks</param>
+        /// <param name="centroidMS2">Whether to centroid the MS2 peaks</param>
+        /// <param name="jobParams">Job parameters</param>
         protected MSXmlGen(
             string workDir,
             string programPath,
@@ -457,8 +457,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="ex"></param>
+        /// <param name="message">Error message</param>
+        /// <param name="ex">Exception</param>
         private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
             mErrorMessage = message;

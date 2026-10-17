@@ -303,10 +303,10 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Close the lock file StreamWriter then delete the lock file
+        /// Close the lock file StreamWriter, then delete the lock file
         /// </summary>
-        /// <param name="lockFilePath"></param>
-        /// <param name="lockStream"></param>
+        /// <param name="lockFilePath">Lock file path</param>
+        /// <param name="lockStream">Lock stream</param>
         public void DeleteLockFile(string lockFilePath, TextWriter lockStream)
         {
             try

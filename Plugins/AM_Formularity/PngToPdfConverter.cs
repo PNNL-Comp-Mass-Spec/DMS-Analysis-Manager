@@ -10,7 +10,7 @@ namespace AnalysisManagerFormularityPlugin
 {
     public class PngToPdfConverter : PRISM.EventNotifier
     {
-        // Ignore Spelling: formularity, Pdf, Png
+        // Ignore Spelling: arial, formularity, Pdf, Png, Textbox
 
         /// <summary>
         /// Page margin, in points
@@ -37,7 +37,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="datasetName"></param>
+        /// <param name="datasetName">Dataset name</param>
         public PngToPdfConverter(string datasetName)
         {
             DatasetName = datasetName;
@@ -50,7 +50,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Add a new page with landscape orientation
         /// </summary>
-        /// <param name="pdfDoc"></param>
+        /// <param name="pdfDoc">PDF document</param>
         private PdfPageInfo AddPage(PdfDocument pdfDoc)
         {
             var currentPageInfo = new PdfPageInfo(pdfDoc, PageMargin, PageOrientation.Landscape);
@@ -142,8 +142,8 @@ namespace AnalysisManagerFormularityPlugin
         /// Create a PDF file with the given PNG files
         /// </summary>
         /// <param name="pdfFilePath">Path to the PDF file create</param>
-        /// <param name="pngFiles"></param>
-        /// <param name="dataSource"></param>
+        /// <param name="pngFiles">List of PNG files to include in the PDF</param>
+        /// <param name="dataSource">Data source name</param>
         public bool CreatePdf(string pdfFilePath, List<FileInfo> pngFiles, string dataSource = "NOMSI")
         {
             if (string.IsNullOrWhiteSpace(dataSource))
@@ -292,9 +292,9 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Determine the height of the given text, in points
         /// </summary>
-        /// <param name="text"></param>
-        /// <param name="gfx"></param>
-        /// <param name="font"></param>
+        /// <param name="text">Text to examine</param>
+        /// <param name="gfx">Graphics context</param>
+        /// <param name="font">Font to use</param>
         private static double GetTextHeight(string text, XGraphics gfx, XFont font)
         {
             var textSize = gfx.MeasureString(text, font);

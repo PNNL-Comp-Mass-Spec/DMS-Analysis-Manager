@@ -24,7 +24,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="pdfDoc"></param>
+        /// <param name="pdfDoc">PDF document</param>
         /// <param name="pageMargin">Page margin, in points</param>
         /// <param name="orientation">Page orientation (portrait or landscape)</param>
         public PdfPageInfo(PdfDocument pdfDoc, double pageMargin, PageOrientation orientation = PageOrientation.Portrait)
@@ -40,7 +40,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Increment CurrentPageY by the given number of points
         /// </summary>
-        /// <param name="points"></param>
+        /// <param name="points">Number of points to increment</param>
         public void IncrementY(double points)
         {
             CurrentPageY += points;

@@ -21,7 +21,7 @@ namespace AnalysisManagerTopFDPlugIn
     /// </summary>
     public class AnalysisResourcesTopFD : AnalysisResources
     {
-        // Ignore Spelling: desc, TopFD
+        // Ignore Spelling: desc, dms, svc, TopFD
 
         public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
         public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
@@ -128,7 +128,7 @@ namespace AnalysisManagerTopFDPlugIn
         /// Look for an existing TopFD results for this dataset (using the same parameter file and same version of TopFD)
         /// If found, creates job step parameters ExistingTopFDResultsDirectory and ExistingTopFDResultsToolVersion
         /// </summary>
-        /// <param name="criticalError"></param>
+        /// <param name="criticalError">Output: true if a critical error occurs</param>
         /// <returns>True if existing results were found, otherwise false</returns>
         private bool FindExistingTopFDResults(out bool criticalError)
         {

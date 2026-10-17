@@ -292,7 +292,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Parse the TopPIC console output file to determine the TopPIC version and to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
@@ -1116,7 +1116,7 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Reads the console output file and removes the majority of the "Processing" messages
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             // This RegEx matches lines of the form:

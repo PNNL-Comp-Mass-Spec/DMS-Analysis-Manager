@@ -20,7 +20,7 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisToolRunnerMASICFinnigan : AnalysisToolRunnerMASICBase
     {
-        // Ignore Spelling: Finnigan, MASIC, na, parm
+        // Ignore Spelling: Finnigan, MASIC, na, parm, Thermo
 
         private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
 
@@ -75,7 +75,7 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Converts the .Raw file specified by thermoRawFile to a .mzXML file
         /// </summary>
-        /// <param name="thermoRawFile"></param>
+        /// <param name="thermoRawFile">Thermo raw file</param>
         /// <returns>Path to the newly created .mzXML file</returns>
 #pragma warning disable IDE0051 // Remove unused private members
 #pragma warning disable RCS1213 // Remove unused member declaration.

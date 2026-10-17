@@ -53,7 +53,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Read a .MGF file and cache the parent ion info for each scan (MH and charge)
         /// </summary>
-        /// <param name="mgfFilePath"></param>
+        /// <param name="mgfFilePath">MGF file path</param>
         /// <returns>Dictionary where keys are scan number and values are the ParentIon MH and Charge for each scan</returns>
         private Dictionary<int, List<ChargeInfo>> CacheMGFParentIonInfo(string mgfFilePath)
         {
@@ -240,8 +240,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Update the count attribute in a dataProcessingList or softwareList element
         /// </summary>
-        /// <param name="reader"></param>
-        /// <param name="writer"></param>
+        /// <param name="reader">XML reader</param>
+        /// <param name="writer">XML writer</param>
         private void UpdateListCount(XmlReader reader, XmlWriter writer)
         {
             if (reader.HasAttributes)
@@ -274,9 +274,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Update the parent ion m/z and charge values in a mzML file using the parent ion info in a .MGF file
         /// </summary>
-        /// <param name="mzMLFilePath"></param>
-        /// <param name="mgfFilePath"></param>
-        /// <param name="replaceMzMLFile"></param>
+        /// <param name="mzMLFilePath">mzML file path</param>
+        /// <param name="mgfFilePath">mgf file path</param>
+        /// <param name="replaceMzMLFile">Whether to replace the original mzML file</param>
         /// <returns>Path to the updated mzML file</returns>
         public string UpdateMzMLParentIonInfoUsingMGF(string mzMLFilePath, string mgfFilePath, bool replaceMzMLFile)
         {

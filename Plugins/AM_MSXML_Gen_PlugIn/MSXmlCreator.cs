@@ -41,11 +41,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="msXmlGeneratorAppPath"></param>
-        /// <param name="workDir"></param>
-        /// <param name="dataset"></param>
-        /// <param name="debugLevel"></param>
-        /// <param name="jobParams"></param>
+        /// <param name="msXmlGeneratorAppPath">MS XML Generator application path</param>
+        /// <param name="workDir">Working directory</param>
+        /// <param name="dataset">Dataset name</param>
+        /// <param name="debugLevel">Debug level</param>
+        /// <param name="jobParams">Job parameters</param>
         public MSXMLCreator(string msXmlGeneratorAppPath, string workDir, string dataset, short debugLevel, IJobParams jobParams)
         {
             mMSXmlGeneratorAppPath = msXmlGeneratorAppPath;
@@ -287,7 +287,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Update the current dataset name
         /// </summary>
         /// <remarks>Used by AnalysisToolRunnerPRIDEConverter.vb and AnalysisToolRunnerRepoPkgr.cs</remarks>
-        /// <param name="datasetName"></param>
+        /// <param name="datasetName">Dataset name</param>
         public void UpdateDatasetName(string datasetName)
         {
             mDatasetName = datasetName;

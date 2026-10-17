@@ -838,8 +838,8 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Rename the plot files, replacing suffix "_Report.PNG" with ".png"
         /// </summary>
-        /// <param name="workDir"></param>
-        /// <param name="pngFiles"></param>
+        /// <param name="workDir">Working directory</param>
+        /// <param name="pngFiles">Output: list of PNG files</param>
         private CloseOutType RenamePlotFiles(DirectoryInfo workDir, out List<FileInfo> pngFiles)
         {
             const int MINIMUM_PNG_FILE_COUNT = 11;

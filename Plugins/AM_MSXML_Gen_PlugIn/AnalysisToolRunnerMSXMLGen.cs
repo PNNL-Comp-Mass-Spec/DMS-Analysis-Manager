@@ -340,7 +340,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Get the path to the .Exe to use for recalculating precursor ion m/z and charge values
         /// </summary>
-        /// <param name="recalculatePrecursorsTool"></param>
+        /// <param name="recalculatePrecursorsTool">Path to the .exe to use for recalculating precursor ion m/z and charge values</param>
         /// <returns>Path to the exe, or an empty string if an error</returns>
         private string GetRecalculatePrecursorsToolProgLoc(out string recalculatePrecursorsTool)
         {
@@ -415,9 +415,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Possibly recalculate precursors, then gzip the .mzML or .mzXML file and copy to the MSXML cache directory
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="datasetId"></param>
-        /// <param name="resultFileExtension"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="datasetId">Dataset ID</param>
+        /// <param name="resultFileExtension">Results file extension</param>
         /// <returns>True if successful, false if an error</returns>
         private bool PostProcessMSXmlFile(DataPackageInfo dataPackageInfo, int datasetId, string resultFileExtension)
         {
@@ -572,9 +572,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Use RawConverter to process the Thermo .Raw file and recalculate the precursor ion information, writing the results to a .MGF file
         /// </summary>
-        /// <param name="rawConverterDir"></param>
-        /// <param name="rawFilePath"></param>
-        /// <param name="mgfFile"></param>
+        /// <param name="rawConverterDir">Raw converter directory</param>
+        /// <param name="rawFilePath">Path to the .raw file</param>
+        /// <param name="mgfFile">Output: .mgf file</param>
         private bool RecalculatePrecursorIonsCreateMGF(string rawConverterDir, string rawFilePath, out FileInfo mgfFile)
         {
             try
