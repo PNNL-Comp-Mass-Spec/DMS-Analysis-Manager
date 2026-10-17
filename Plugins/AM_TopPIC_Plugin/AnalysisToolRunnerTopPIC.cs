@@ -267,7 +267,10 @@ namespace AnalysisManagerTopPICPlugIn
                 paramToArgMapping.Add("ErrorTolerance", "frag-error-tolerance");        // TopPIC parameter files for v2.0 and later use "FragmentErrorTolerance" and "PrecursorErrorTolerance" instead of "ErrorTolerance"
                 paramToArgMapping.Add("FragmentErrorTolerance", "frag-error-tolerance");
                 paramToArgMapping.Add("PrecursorErrorTolerance", "prec-error-tolerance");
-                paramToArgMapping.Add("ProteoformErrorTolerance", "proteoform-error-tolerance");
+                if (mTopPICVersion >= new Version(2, 1))
+                    paramToArgMapping.Add("ProteoformErrorTolerance", "cluster-error-tolerance");
+                else
+                    paramToArgMapping.Add("ProteoformErrorTolerance", "proteoform-error-tolerance");
             }
             else if (mTopPICVersion >= new Version(1, 9))
             {
