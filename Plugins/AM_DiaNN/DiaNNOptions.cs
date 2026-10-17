@@ -246,7 +246,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </summary>
         /// <remarks>
         /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
-        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PROTEIN"/></para> and similar constants)
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PROTEIN"/> and similar constants)</para>
         /// </remarks>
         public Dictionary<string, SortedSet<double>> StaticModifications { get; }
 
@@ -550,7 +550,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </summary>
         /// <remarks>
         /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
-        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PEPTIDE"/></para> and similar constants)
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PEPTIDE"/> and similar constants)</para>
         /// </remarks>
         /// <param name="paramFileEntries">List of parameter file entries</param>
         /// <param name="staticModDefinitions">Output: list of static modifications</param>

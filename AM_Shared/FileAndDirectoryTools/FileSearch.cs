@@ -1492,8 +1492,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// <para></para>
+        /// <para>
         /// Looks for the newest mzXML or mzML file (as specified by argument msXmlType) for this dataset
+        /// </para>
         /// <para>
         /// The logic in this method is similar to <see cref="RetrieveCachedMSXMLFile"/>,
         /// but this method returns the newest mzXML or mzML file, while RetrieveCachedMSXMLFile looks for the one

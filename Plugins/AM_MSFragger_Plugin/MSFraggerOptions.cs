@@ -52,7 +52,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         /// <remarks>
         /// <para>Keys are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
-        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PROTEIN"/></para> and similar constants)
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PROTEIN"/> and similar constants)</para>
         /// </remarks>
         public Dictionary<string, SortedSet<double>> StaticModifications { get; }
 
@@ -334,7 +334,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         /// <remarks>
         /// <para>Keys in the output dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
-        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/></para> and similar constants)
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/> and similar constants)</para>
         /// </remarks>
         /// <param name="paramFileEntries">List of parameter file entries, as Key/Value pairs</param>
         /// <param name="staticModsByResidue">Output: dictionary of static modifications, by residue or position</param>
