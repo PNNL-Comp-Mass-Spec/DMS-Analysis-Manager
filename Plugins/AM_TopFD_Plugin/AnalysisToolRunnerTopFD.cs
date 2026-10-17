@@ -216,12 +216,12 @@ namespace AnalysisManagerTopFDPlugIn
                 {"MaxCharge", "max-charge"},
                 {"MaxMass", "max-mass"},
                 {"MzError", "mz-error"},
-                {"SNRatio", "ms-two-sn-ratio"},
-                {"SNRatioMS1", "ms-one-sn-ratio"},
-                {"SNRatioMS2", "ms-two-sn-ratio"},
+                {"SNRatio", "ms2-sn-ratio"},
+                {"SNRatioMS1", "ms1-sn-ratio"},             // Renamed from "ms-one-sn-ratio" to "ms1-sn-ratio" in TopFD v2.1.0
+                {"SNRatioMS2", "ms2-sn-ratio"},             // Renamed from "ms-two-sn-ratio" to "ms2-sn-ratio" in TopFD v2.1.0
                 {"PrecursorWindow", "precursor-window"},
-                {"MS1Missing", "missing-level-one"},
-                {"DisableHtmlOutput", "skip-html-folder"}      // Argument --skip-html-folder was removed from TopFD v1.5 (which is included with TopPIC v1.9)
+                {"MS1Missing", "missing-ms1"},              // Renamed from "missing-ms1" to "missing-level-one" in TopFD 2.1.0
+                {"DisableHtmlOutput", "skip-html-folder"}   // Argument --skip-html-folder was removed from TopFD v1.5 (which is included with TopPIC v1.9)
             };
         }
 
