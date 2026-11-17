@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Data;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using AnalysisManagerBase;
 using AnalysisManagerBase.JobConfig;
 using CsvHelper;
-using CsvHelper.Configuration;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDiaNNPlugIn
@@ -110,14 +108,27 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 using (var reader = new StreamReader(new FileStream(reportStatsTsvFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.CurrentCulture) { Delimiter = "\t"}))
+                using (var csv = CsvReader.Create(reader, new CsvReaderOptions { Separator = '\t' }))
                 {
                     csv.Read();
                     csv.ReadHeader();
+
+                    if (!csv.TryGetFieldIndex(MASS_ERROR_PPM, out var massErrorPpmIndex))
+                    {
+                        ErrorMessage = string.Format("Did not find '{0}' in the DIA-NN report.stats.tsv file", MASS_ERROR_PPM);
+                        return false;
+                    }
+
+                    if (!csv.TryGetFieldIndex(MASS_ERROR_PPM, out var massErrorPpmCorrectedIndex))
+                    {
+                        ErrorMessage = string.Format("Did not find '{0}' in the DIA-NN report.stats.tsv file", MASS_ERROR_PPM_CORRECTED);
+                        return false;
+                    }
+
                     while (csv.Read())
                     {
-                        MassErrorStats.MassErrorPPM = csv.GetField<double>(MASS_ERROR_PPM);
-                        MassErrorStats.MassErrorPPMCorrected = csv.GetField<double>(MASS_ERROR_PPM_CORRECTED);
+                        MassErrorStats.MassErrorPPM = csv.Parse<double>(massErrorPpmIndex);
+                        MassErrorStats.MassErrorPPMCorrected = csv.Parse<double>(massErrorPpmCorrectedIndex);
                     }
                 }
 

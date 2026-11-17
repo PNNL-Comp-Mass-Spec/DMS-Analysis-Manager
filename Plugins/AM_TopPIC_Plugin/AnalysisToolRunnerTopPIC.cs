@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,7 +15,6 @@ using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace AnalysisManagerTopPICPlugIn
 {
@@ -1694,12 +1692,7 @@ namespace AnalysisManagerTopPICPlugIn
                                     if (useCsvReader)
                                     {
                                         // Instantiate the CSV Reader
-                                        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-                                        {
-                                            Delimiter = ","
-                                        };
-
-                                        csvReader = new CsvReader(reader, config);
+                                        csvReader = CsvReader.Create(reader, new CsvReaderOptions { Separator = ',' });
                                     }
                                 }
                             }
@@ -1726,13 +1719,9 @@ namespace AnalysisManagerTopPICPlugIn
 
                                 var rowData = new List<string>();
 
-                                for (var columnIndex = 0; columnIndex < csvReader.Parser.Count; columnIndex++)
+                                for (var columnIndex = 0; columnIndex < csvReader.Headers.Count; columnIndex++)
                                 {
-                                    if (!csvReader.TryGetField<string>(columnIndex, out var fieldValue))
-                                    {
-                                        break;
-                                    }
-
+                                    var fieldValue = csvReader.GetStringOrNull(columnIndex);
                                     rowData.Add(fieldValue);
                                 }
 
