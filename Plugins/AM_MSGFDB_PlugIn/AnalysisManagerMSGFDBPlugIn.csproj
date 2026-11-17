@@ -78,7 +78,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.5.11</Version>
+      <Version>1.5.12</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.9.25</Version>

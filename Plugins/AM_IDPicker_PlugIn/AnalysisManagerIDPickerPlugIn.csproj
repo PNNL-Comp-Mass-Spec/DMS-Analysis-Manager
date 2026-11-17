@@ -57,12 +57,12 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.10.91</Version>
+      <Version>3.10.94</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.5.11</Version>
+      <Version>1.5.12</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.9.25</Version>
