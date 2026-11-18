@@ -110,8 +110,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 using (var reader = new StreamReader(new FileStream(reportStatsTsvFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 using (var csv = CsvReader.Create(reader, new CsvReaderOptions { HasHeader = true, Separator = '\t' }))
                 {
+                    // This reads both the header line and the first record
                     csv.Read();
-                    csv.ReadHeader();
 
                     if (!csv.TryGetFieldIndex(MASS_ERROR_PPM, out var massErrorPpmIndex))
                     {
@@ -119,16 +119,20 @@ namespace AnalysisManagerDiaNNPlugIn
                         return false;
                     }
 
-                    if (!csv.TryGetFieldIndex(MASS_ERROR_PPM, out var massErrorPpmCorrectedIndex))
+                    if (!csv.TryGetFieldIndex(MASS_ERROR_PPM_CORRECTED, out var massErrorPpmCorrectedIndex))
                     {
                         ErrorMessage = string.Format("Did not find '{0}' in the DIA-NN report.stats.tsv file", MASS_ERROR_PPM_CORRECTED);
                         return false;
                     }
 
-                    while (csv.Read())
+                    if (csv.TryParse<double>(massErrorPpmIndex, out var massErrorPpm))
                     {
-                        MassErrorStats.MassErrorPPM = csv.Parse<double>(massErrorPpmIndex);
-                        MassErrorStats.MassErrorPPMCorrected = csv.Parse<double>(massErrorPpmCorrectedIndex);
+                        MassErrorStats.MassErrorPPM = massErrorPpm;
+                    }
+
+                    if (csv.TryParse<double>(massErrorPpmCorrectedIndex, out var massErrorPpmCorrected))
+                    {
+                        MassErrorStats.MassErrorPPMCorrected = massErrorPpmCorrected;
                     }
                 }
 
