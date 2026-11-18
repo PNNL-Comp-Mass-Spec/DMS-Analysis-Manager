@@ -1719,7 +1719,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                                 var rowData = new List<string>();
 
-                                for (var columnIndex = 0; columnIndex < csvReader.Headers.Count; columnIndex++)
+                                for (var columnIndex = 0; columnIndex < csvReader.FieldCount; columnIndex++)
                                 {
                                     var fieldValue = csvReader.GetStringOrNull(columnIndex);
                                     rowData.Add(fieldValue);
