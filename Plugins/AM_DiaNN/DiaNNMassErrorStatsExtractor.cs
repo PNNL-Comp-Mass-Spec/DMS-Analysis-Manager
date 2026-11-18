@@ -108,7 +108,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 using (var reader = new StreamReader(new FileStream(reportStatsTsvFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var csv = CsvReader.Create(reader, new CsvReaderOptions { Separator = '\t' }))
+                using (var csv = CsvReader.Create(reader, new CsvReaderOptions { HasHeader = true, Separator = '\t' }))
                 {
                     csv.Read();
                     csv.ReadHeader();

@@ -1692,7 +1692,7 @@ namespace AnalysisManagerTopPICPlugIn
                                     if (useCsvReader)
                                     {
                                         // Instantiate the CSV Reader
-                                        csvReader = CsvReader.Create(reader, new CsvReaderOptions { Separator = ',' });
+                                        csvReader = CsvReader.Create(reader, new CsvReaderOptions { HasHeader = true, Separator = ',' });
                                     }
                                 }
                             }
